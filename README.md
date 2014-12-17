@@ -5,4 +5,4 @@ top-traffic
 
 Messaging/DRPC/Node traffic with high throughput. 
 
-![top-traffic](https://rawgit.com/wsky/top-traffic/master/top-traffic.svg)
+![traffic](https://rawgit.com/wsky/top-traffic/master/doc/top-traffic.svg)
