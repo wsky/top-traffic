@@ -6,7 +6,7 @@ import org.junit.Test;
 
 public class NodeTrafficTest {
 	@Test
-	public void traffic_test() {
+	public void c1_r_c2_traffic_test() {
 		Object req = "req";
 		Object rep = "rep";
 		Object msg = "msg";
@@ -14,21 +14,21 @@ public class NodeTrafficTest {
 		Object req_body = "req_body";
 		Object rep_body = "rep_body";
 		Object outId = 1;
-		Object dst = "C3";
-		Object n_id_1 = 1;
-		Object n_id_2 = 2;
-		Object n_id_3 = 3;
+		Object dst = "C2";
+		Object r_id = 0;
+		Object c1_id = 1;
+		Object c2_id = 2;
 		
 		MessageHelper helper = createStrictMock(MessageHelper.class);
-		Router r1 = newRouter(helper, n_id_1, "R2", null);
-		Connection c2 = newConnection(helper, n_id_2, "C2", r1);
-		Connection c3 = newConnection(helper, n_id_3, dst, r1);
-		r1.register(c2);
-		r1.register(c3);
+		Router r = newRouter(helper, r_id, "R", null);
+		Connection c1 = newConnection(helper, c1_id, "C1", r);
+		Connection c2 = newConnection(helper, c2_id, dst, r);
+		r.register(c1);
+		r.register(c2);
 		
 		// c2-r1->c3
 		expect(helper.getCommand(req)).andReturn(Commands.REQ);
-		expect(helper.newMessage(req, c2)).andReturn(msg);
+		expect(helper.newMessage(req, c1)).andReturn(msg);
 		expect(helper.getCommand(msg)).andReturn(Commands.MSG);
 		expect(helper.getDestination(msg)).andReturn(dst);
 		expect(helper.getCommand(msg)).andReturn(Commands.MSG);
@@ -39,18 +39,18 @@ public class NodeTrafficTest {
 		expect(helper.getOutId(rep)).andReturn(outId);
 		expect(helper.newAck(msg, rep)).andReturn(ack);
 		expect(helper.getCommand(ack)).andReturn(Commands.ACK);
-		expect(helper.getNext(ack)).andReturn(n_id_1);
+		expect(helper.getNext(ack)).andReturn(r_id);
 		// r1->c2
 		expect(helper.getCommand(ack)).andReturn(Commands.ACK);
-		expect(helper.getNext(ack)).andReturn(n_id_2);
+		expect(helper.getNext(ack)).andReturn(c1_id);
 		expect(helper.getCommand(ack)).andReturn(Commands.ACK);
 		expect(helper.getBody(ack)).andReturn(rep_body);
 		replay(helper);
 		
-		System.out.println(String.format("%s#%s -> %s", c2.flag(), c2.id(), req));
-		c2.onMessage(req);
-		System.out.println(String.format("%s#%s -> %s", c3.flag(), c3.id(), rep));
-		c3.onMessage(rep);
+		System.out.println(String.format("%s#%s -> %s", c1.flag(), c1.id(), req));
+		c1.onMessage(req);
+		System.out.println(String.format("%s#%s -> %s", c2.flag(), c2.id(), rep));
+		c2.onMessage(rep);
 	}
 	
 	private Router newRouter(MessageHelper helper, final Object id, final Object flag, final Node next) {
