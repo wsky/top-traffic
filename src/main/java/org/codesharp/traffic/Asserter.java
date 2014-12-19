@@ -5,11 +5,11 @@ public class Asserter {
 		return new RuntimeException(msg);
 	}
 	
-	public static RuntimeException unsupported(String msg) {
+	public static RuntimeException unsupported(Object msg) {
 		return exception(String.format("unsupported: %s", msg));
 	}
 	
-	public static void throwUnsupported(String msg) {
+	public static void throwUnsupported(Object msg) {
 		throw unsupported(msg);
 	}
 	
