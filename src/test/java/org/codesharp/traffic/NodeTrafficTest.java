@@ -137,7 +137,7 @@ public class NodeTrafficTest {
 		return new Connection(local) {
 			@Override
 			public void send(Object msg) {
-				System.out.println(String.format("node#%s -> conn#%s: %s", this.local().flag(), this.id(), msg));
+				System.out.println(String.format("node#%s -> conn#%s: %s", local.flag(), this.id(), msg));
 				if (remote != null)
 					remote.onMessage(msg);
 			}

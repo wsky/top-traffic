@@ -13,11 +13,7 @@ public abstract class Connection {
 	
 	public abstract void send(Object msg);
 	
-	public Node local() {
-		return this.local;
-	}
-	
 	public void onMessage(Object msg) {
-		this.local().onMessage(msg, this);
+		this.local.onMessage(msg, this);
 	}
 }
