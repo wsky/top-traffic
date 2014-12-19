@@ -1,106 +1,99 @@
 package org.codesharp.traffic;
 
+import static junit.framework.Assert.*;
 import static org.easymock.classextension.EasyMock.*;
 
+import java.util.LinkedList;
+import java.util.Queue;
+
+import org.junit.After;
 import org.junit.Test;
 
 public class NodeTrafficTest {
-	private Object req = "req";
-	private Object rep = "rep";
 	private Object msg = "msg";
 	private Object ack = "ack";
-	private Object req_body = "req_body";
-	private Object rep_body = "rep_body";
-	private Object outId = 1;
-	private Object dst = "C2";
-	private Object c1_id = 1;
-	private Object c2_id = 2;
-	private Object r1_id = 3;
-	private Object r2_id = 4;
+	private Object n1_flag = "N1";
+	private Object n2_flag = "N2";
+	private Object n3_flag = "N3";
+	private Object n4_flag = "N4";
+	// local-remote
+	private Object n2_n1_id = "2-1";
+	private Object n2_n3_id = "2-3";
+	private Object n3_n2_id = "3-2";
+	private Object n3_n4_id = "3-4";
 	
-	@Test
-	public void c1_r_c2_traffic_test() {
-		MessageHelper helper = createStrictMock(MessageHelper.class);
-		Router r = newRouter(helper, r1_id, "R", null);
-		Connection c1 = newConnection(helper, c1_id, "C1", r);
-		Connection c2 = newConnection(helper, c2_id, dst, r);
-		r.register(c1);
-		r.register(c2);
-		
-		// c2-r1->c3
-		expect(helper.getCommand(req)).andReturn(Commands.REQ);
-		expect(helper.newMessage(req, c1)).andReturn(msg);
-		expect(helper.getCommand(msg)).andReturn(Commands.MSG);
-		expect(helper.getDestination(msg)).andReturn(dst);
-		expect(helper.getCommand(msg)).andReturn(Commands.MSG);
-		expect(helper.getOutId(msg)).andReturn(outId);
-		expect(helper.getBody(msg)).andReturn(req_body);
-		// c3->r1
-		expect(helper.getCommand(rep)).andReturn(Commands.REP);
-		expect(helper.getOutId(rep)).andReturn(outId);
-		expect(helper.newAck(msg, rep)).andReturn(ack);
-		expect(helper.getCommand(ack)).andReturn(Commands.ACK);
-		expect(helper.getNext(ack)).andReturn(r1_id);
-		// r1->c2
-		expect(helper.getCommand(ack)).andReturn(Commands.ACK);
-		expect(helper.getNext(ack)).andReturn(c1_id);
-		expect(helper.getCommand(ack)).andReturn(Commands.ACK);
-		expect(helper.getBody(ack)).andReturn(rep_body);
-		replay(helper);
-		
-		sendMessage(c1, req);
-		sendMessage(c2, rep);
-		
-		verify(helper);
+	private Queue<Object> path = new LinkedList<Object>();
+	
+	@After
+	public void before() {
+		path.clear();
 	}
 	
 	@Test
-	public void c1_r1_r2_c2_traffic_test() {
-		MessageHelper helper = createStrictMock(MessageHelper.class);
+	public void N1_N2_N3_traffic_test() {
+		MessageHandle handle = createStrictMock(MessageHandle.class);
+		expect(handle.getCommand(msg)).andReturn(Commands.MSG);
+		expect(handle.getDestination(msg)).andReturn(n3_flag);
+		expect(handle.getCommand(ack)).andReturn(Commands.ACK);
+		expect(handle.getNext(ack)).andReturn(n2_n1_id);
+		replay(handle);
 		
-		Router r1 = newRouter(helper, r1_id, "R1", null);
-		Router r2 = newRouter(helper, r2_id, "R2", null);
-		Connection c1 = newConnection(helper, c1_id, "C1", r1);
-		Connection c2 = newConnection(helper, c2_id, dst, r2);
-		Node r1_proxy = newProxy(r1.id(), r1.flag(), r1);
-		Node c2_proxy = newProxy(c2.id(), c2.flag(), r2);
-		r1.register(c1);
-		r1.register(c2_proxy);
-		r2.register(c2);
-		r2.register(r1_proxy);
+		Node n2 = newNode(handle, n2_flag);
+		// n1,n2 connect
+		Connection n1_n2 = newConnection(n2_n1_id, n2);
+		NodeProxy n1 = newProxy(n1_flag);
+		n2.accept(n1, n1_n2);
+		// n2,n3 connect
+		Connection n2_n3 = newConnection(n2_n3_id, n2);
+		NodeProxy n3 = newProxy(n3_flag);
+		n2.accept(n3, n2_n3);
 		
-		expect(helper.getCommand(req)).andReturn(Commands.REQ);
-		expect(helper.newMessage(req, c1)).andReturn(msg);
-		expect(helper.getCommand(msg)).andReturn(Commands.MSG);
-		expect(helper.getDestination(msg)).andReturn(dst);
-		expect(helper.getCommand(msg)).andReturn(Commands.MSG);
-		expect(helper.getDestination(msg)).andReturn(dst);
-		expect(helper.getCommand(msg)).andReturn(Commands.MSG);
-		expect(helper.getOutId(msg)).andReturn(outId);
-		expect(helper.getBody(msg)).andReturn(req_body);
+		n1_n2.onMessage(msg);
+		n2_n3.onMessage(ack);
 		
-		expect(helper.getCommand(rep)).andReturn(Commands.REP);
-		expect(helper.getOutId(rep)).andReturn(outId);
-		expect(helper.newAck(msg, rep)).andReturn(ack);
-		expect(helper.getCommand(ack)).andReturn(Commands.ACK);
-		expect(helper.getNext(ack)).andReturn(r1_id);
-		expect(helper.getCommand(ack)).andReturn(Commands.ACK);
-		expect(helper.getNext(ack)).andReturn(c1_id);
-		expect(helper.getCommand(ack)).andReturn(Commands.ACK);
-		expect(helper.getBody(ack)).andReturn(rep_body);
-		replay(helper);
-		
-		sendMessage(c1, req);
-		sendMessage(c2, rep);
-		
-		verify(helper);
+		verify(handle);
+		assertPath(n2_n1_id, n2_flag, n2_n3_id, n2_flag);
 	}
 	
-	private Router newRouter(MessageHelper helper, final Object id, final Object flag, final Node next) {
-		return new Router(helper) {
+	@Test
+	public void N1_N2_N3_N4_traffic_test() {
+		MessageHandle handle = createStrictMock(MessageHandle.class);
+		expect(handle.getCommand(msg)).andReturn(Commands.MSG);
+		expect(handle.getDestination(msg)).andReturn(n4_flag);
+		expect(handle.getCommand(msg)).andReturn(Commands.MSG);
+		expect(handle.getDestination(msg)).andReturn(n4_flag);
+		expect(handle.getCommand(ack)).andReturn(Commands.ACK);
+		expect(handle.getNext(ack)).andReturn(n3_n2_id);
+		expect(handle.getCommand(ack)).andReturn(Commands.ACK);
+		expect(handle.getNext(ack)).andReturn(n2_n1_id);
+		replay(handle);
+		
+		Node n2 = newNode(handle, n2_flag);
+		Node n3 = newNode(handle, n3_flag);
+		// n1,n2 connect
+		Connection n1_n2 = newConnection(n2_n1_id, n2);
+		n2.accept(newProxy(n1_flag), n1_n2);
+		// n3,n4 connect
+		Connection n3_n4 = newConnection(n3_n4_id, n3);
+		n3.accept(newProxy(n4_flag), n3_n4);
+		// n2 next to n3
+		n2.setNext(newProxy(n3_flag, n2_flag, newConnection(n2_n3_id, n3)));
+		// n2-n3
+		Connection n2_n3 = newConnection(n2_n3_id, n2);
+		Connection n3_n2 = newConnection(n3_n2_id, n3, n2_n3);
+		n3.accept(newProxy(n2_flag), n3_n2);
+		
+		n1_n2.onMessage(msg);
+		n3_n4.onMessage(ack);
+		
+		verify(handle);
+		assertPath(n2_n1_id, n2_flag, n2_n3_id, n3_flag, n3_n4_id, n3_flag, n2_n3_id, n2_flag);
+	}
+	
+	private Node newNode(MessageHandle handle, final Object flag) {
+		return new Node(handle) {
 			@Override
-			public Object id() {
-				return id;
+			protected void process(Object msg) {
 			}
 			
 			@Override
@@ -109,89 +102,68 @@ public class NodeTrafficTest {
 			}
 			
 			@Override
+			public void onMessage(Object msg, Connection from) {
+				path.add(this.flag());
+				System.out.println(String.format("conn#%s -> node#%s: %s", from.id(), this.flag(), msg));
+				super.onMessage(msg, from);
+			}
+		};
+	}
+	
+	private NodeProxy newProxy(final Object flag) {
+		return newProxy(flag, null, null);
+	}
+	
+	private NodeProxy newProxy(final Object flag, final Object at, final Connection conn) {
+		return new NodeProxy() {
+			@Override
 			public void send(Object msg) {
-				this.onMessage(msg);
+				System.out.println(String.format("node#%s -> node#%s: %s", at, this.flag(), msg));
+				conn.onMessage(msg);
 			}
 			
 			@Override
-			public Node next() {
-				return next;
+			public Object flag() {
+				return flag;
+			}
+		};
+	}
+	
+	private Connection newConnection(final Object id, final Node local) {
+		return newConnection(id, local, null);
+	}
+	
+	private Connection newConnection(final Object id, final Node local, final Connection remote) {
+		return new Connection(local) {
+			@Override
+			public void send(Object msg) {
+				System.out.println(String.format("node#%s -> conn#%s: %s", this.local().flag(), this.id(), msg));
+				if (remote != null)
+					remote.onMessage(msg);
+			}
+			
+			@Override
+			public Object id() {
+				return id;
 			}
 			
 			@Override
 			public void onMessage(Object msg) {
-				message(this, msg);
+				path.add(this.id());
+				System.out.println(String.format("network -> conn#%s: %s", this.id(), msg));
 				super.onMessage(msg);
 			}
 		};
 	}
 	
-	private Connection newConnection(MessageHelper helper, final Object id, final Object flag, final Node next) {
-		return new Connection(helper) {
-			@Override
-			public Object id() {
-				return id;
-			}
-			
-			@Override
-			public Object flag() {
-				return flag;
-			}
-			
-			@Override
-			protected void flush(Object msg) {
-				System.out.println(String.format("%s -> %s#%s", msg, this.flag(), this.id()));
-			}
-			
-			@Override
-			public Node next() {
-				return next;
-			}
-			
-			@Override
-			public void onMessage(Object msg) {
-				message(this, msg);
-				super.onMessage(msg);
-			}
-		};
-	}
-	
-	private Node newProxy(final Object id, final Object flag, final Node real) {
-		return new Node() {
-			@Override
-			public Object id() {
-				return id;
-			}
-			
-			@Override
-			public Object flag() {
-				return flag;
-			}
-			
-			@Override
-			public void send(Object msg) {
-				message(this, msg, "proxy");
-				real.onMessage(msg);
-			}
-			
-			@Override
-			public void onMessage(Object msg) {
-				Asserter.throwUnsupported("onMessage in proxy");
-			}
-			
-			@Override
-			public Node next() {
-				return null;
-			}
-		};
-	}
-	
-	private void sendMessage(Node n, Object msg) {
-		System.out.println(String.format("%s#%s -> %s", n.flag(), n.id(), msg));
-		n.onMessage(msg);
-	}
-	
-	private void message(Node n, Object msg, Object... extra) {
-		System.out.println(String.format("%s -> %s#%s#%s#%s", msg, n.flag(), n.id(), n.hashCode(), extra.length > 0 ? extra[0] : ""));
+	private void assertPath(Object... args) {
+		int i = 0;
+		Object p;
+		while ((p = path.poll()) != null) {
+			assertEquals(args[i++], p);
+			System.out.print(p);
+			System.out.print(" <-> ");
+		}
+		System.out.println();
 	}
 }
