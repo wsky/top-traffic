@@ -1,6 +1,8 @@
 package org.codesharp.traffic;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Stack;
 
 public class SimpleMessageHandle implements MessageHandle {
@@ -28,6 +30,7 @@ public class SimpleMessageHandle implements MessageHandle {
 		public Object Destination;
 		public Stack<Object> Path = new Stack<Object>();
 		public Object Body;
+		public Map<Object, Object> Headers = new HashMap<Object, Object>();
 		
 		@Override
 		public String toString() {
