@@ -33,10 +33,10 @@ public abstract class Node {
 		byte cmd = this.handle.getCommand(msg);
 		switch (cmd) {
 		case Commands.MSG:
-			this.route(msg, from);
+			this.internalOnMessage(this.handle.append(msg, from.id()), from);
 			break;
 		case Commands.ACK:
-			this.forward(msg);
+			this.internalOnAck(msg);
 			break;
 		default:
 			Asserter.throwUnsupportedCommand(cmd);
@@ -44,20 +44,17 @@ public abstract class Node {
 		}
 	}
 	
-	private void route(Object msg, Connection from) {
-		Object dst = this.handle.getDestination(this.handle.append(msg, from.id()));
-		Connection[] nodes = this.routes.get(dst);
-		
-		if (nodes != null && nodes.length > 0)
-			nodes[this.random.nextInt(nodes.length)].send(msg);
+	protected void internalOnMessage(Object msg, Connection from) {
+		Connection conn = this.route(msg, from);
+		if (conn != null)
+			conn.send(msg);
 		else if (this.next != null)
 			this.next.send(msg);
 		else
-			// drop msg as unknown destination
-			System.err.println("drop unknown msg");
+			System.err.println("drop msg as unknown destination");
 	}
 	
-	private void forward(Object msg) {
+	protected void internalOnAck(Object msg) {
 		Object next = this.handle.getNext(msg);
 		
 		if (next == null) {
@@ -69,7 +66,14 @@ public abstract class Node {
 		if (n != null)
 			n.send(msg);
 		else
-			// drop msg as path broken
 			System.err.println("drop msg as next broken: " + next);
 	}
+	
+	protected Connection route(Object msg, Connection from) {
+		Object dst = this.handle.getDestination(msg);
+		Connection[] nodes = this.routes.get(dst);
+		return nodes != null && nodes.length > 0 ?
+				nodes[this.random.nextInt(nodes.length)] : null;
+	}
+	
 }
