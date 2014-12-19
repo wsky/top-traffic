@@ -45,13 +45,14 @@ public abstract class Node {
 	}
 	
 	protected void internalOnMessage(Object msg, Connection from) {
-		Connection conn = this.route(msg, from);
+		Object dst = this.handle.getDestination(msg);
+		Connection conn = this.route(dst, from);
 		if (conn != null)
 			conn.send(msg);
 		else if (this.next != null)
 			this.next.send(msg);
 		else
-			System.err.println("drop msg as unknown destination");
+			System.out.println("[ERROR] drop msg as unknown destination: " + dst);
 	}
 	
 	protected void internalOnAck(Object msg) {
@@ -66,11 +67,10 @@ public abstract class Node {
 		if (n != null)
 			n.send(msg);
 		else
-			System.err.println("drop msg as next broken: " + next);
+			System.out.println("[ERROR] drop msg as next broken: " + next);
 	}
 	
-	protected Connection route(Object msg, Connection from) {
-		Object dst = this.handle.getDestination(msg);
+	protected Connection route(Object dst, Connection from) {
 		Connection[] nodes = this.routes.get(dst);
 		return nodes != null && nodes.length > 0 ?
 				nodes[this.random.nextInt(nodes.length)] : null;
