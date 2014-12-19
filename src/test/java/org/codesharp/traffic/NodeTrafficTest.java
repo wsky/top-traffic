@@ -1,25 +1,21 @@
 package org.codesharp.traffic;
 
 import static junit.framework.Assert.*;
-import static org.easymock.classextension.EasyMock.*;
 
 import java.util.LinkedList;
 import java.util.Queue;
 
+import org.codesharp.traffic.SimpleMessageHandle.Message;
 import org.junit.After;
 import org.junit.Test;
 
 public class NodeTrafficTest {
-	private Object msg = "msg";
-	private Object ack = "ack";
 	private Object n1_flag = "N1";
 	private Object n2_flag = "N2";
 	private Object n3_flag = "N3";
 	private Object n4_flag = "N4";
-	// local-remote
 	private Object n2_n1_id = "2-1";
 	private Object n2_n3_id = "2-3";
-	private Object n3_n2_id = "3-2";
 	private Object n3_n4_id = "3-4";
 	
 	private Queue<Object> path = new LinkedList<Object>();
@@ -31,12 +27,9 @@ public class NodeTrafficTest {
 	
 	@Test
 	public void N1_N2_N3_traffic_test() {
-		MessageHandle handle = createStrictMock(MessageHandle.class);
-		expect(handle.getCommand(msg)).andReturn(Commands.MSG);
-		expect(handle.getDestination(msg)).andReturn(n3_flag);
-		expect(handle.getCommand(ack)).andReturn(Commands.ACK);
-		expect(handle.getNext(ack)).andReturn(n2_n1_id);
-		replay(handle);
+		MessageHandle handle = new SimpleMessageHandle();
+		Message msg = new Message();
+		msg.Destination = n3_flag;
 		
 		Node n2 = newNode(handle, n2_flag);
 		// n1,n2 connect
@@ -49,24 +42,17 @@ public class NodeTrafficTest {
 		n2.accept(n3, n2_n3);
 		
 		n1_n2.onMessage(msg);
-		n2_n3.onMessage(ack);
+		msg.Command = Commands.ACK;
+		n2_n3.onMessage(msg);
 		
-		verify(handle);
 		assertPath(n2_n1_id, n2_flag, n2_n3_id, n2_flag);
 	}
 	
 	@Test
 	public void N1_N2_N3_N4_traffic_test() {
-		MessageHandle handle = createStrictMock(MessageHandle.class);
-		expect(handle.getCommand(msg)).andReturn(Commands.MSG);
-		expect(handle.getDestination(msg)).andReturn(n4_flag);
-		expect(handle.getCommand(msg)).andReturn(Commands.MSG);
-		expect(handle.getDestination(msg)).andReturn(n4_flag);
-		expect(handle.getCommand(ack)).andReturn(Commands.ACK);
-		expect(handle.getNext(ack)).andReturn(n3_n2_id);
-		expect(handle.getCommand(ack)).andReturn(Commands.ACK);
-		expect(handle.getNext(ack)).andReturn(n2_n1_id);
-		replay(handle);
+		MessageHandle handle = new SimpleMessageHandle();
+		Message msg = new Message();
+		msg.Destination = n4_flag;
 		
 		Node n2 = newNode(handle, n2_flag);
 		Node n3 = newNode(handle, n3_flag);
@@ -80,13 +66,13 @@ public class NodeTrafficTest {
 		n2.setNext(newProxy(n3_flag, n2_flag, newConnection(n2_n3_id, n3)));
 		// n2-n3
 		Connection n2_n3 = newConnection(n2_n3_id, n2);
-		Connection n3_n2 = newConnection(n3_n2_id, n3, n2_n3);
+		Connection n3_n2 = newConnection(n2_n3_id, n3, n2_n3);
 		n3.accept(newProxy(n2_flag), n3_n2);
 		
 		n1_n2.onMessage(msg);
-		n3_n4.onMessage(ack);
+		msg.Command = Commands.ACK;
+		n3_n4.onMessage(msg);
 		
-		verify(handle);
 		assertPath(n2_n1_id, n2_flag, n2_n3_id, n3_flag, n3_n4_id, n3_flag, n2_n3_id, n2_flag);
 	}
 	
@@ -157,6 +143,7 @@ public class NodeTrafficTest {
 	}
 	
 	private void assertPath(Object... args) {
+		assertEquals(args.length, path.size());
 		int i = 0;
 		Object p;
 		while ((p = path.poll()) != null) {

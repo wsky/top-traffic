@@ -6,4 +6,6 @@ public interface MessageHandle {
 	Object getDestination(Object msg);
 	
 	Object getNext(Object msg);
+	
+	Object append(Object msg, Object from);
 }

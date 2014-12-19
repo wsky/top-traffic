@@ -3,8 +3,6 @@ package org.codesharp.traffic;
 public abstract class Connection {
 	private Node local;
 	
-	protected MessageHandle handle;
-	
 	public Connection(Node local) {
 		this.local = local;
 	}

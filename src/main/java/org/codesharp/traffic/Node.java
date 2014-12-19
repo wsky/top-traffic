@@ -33,7 +33,7 @@ public abstract class Node {
 		byte cmd = this.handle.getCommand(msg);
 		switch (cmd) {
 		case Commands.MSG:
-			this.route(msg);
+			this.route(msg, from);
 			break;
 		case Commands.ACK:
 			this.forward(msg);
@@ -44,8 +44,8 @@ public abstract class Node {
 		}
 	}
 	
-	private void route(Object msg) {
-		Object dst = this.handle.getDestination(msg);
+	private void route(Object msg, Connection from) {
+		Object dst = this.handle.getDestination(this.handle.append(msg, from.id()));
 		Connection[] nodes = this.routes.get(dst);
 		
 		if (nodes != null && nodes.length > 0)
