@@ -23,4 +23,11 @@ public class Asserter {
 		return msg;
 	}
 	
+	public static void throwUnsupportedHeader(Object o) {
+		throwUnsupported(String.format("header type %s", o));
+	}
+	
+	public static RuntimeException overflow(String who, int index) {
+		return exception(String.format("%s ovreflow at: %s", who, index));
+	}
 }
