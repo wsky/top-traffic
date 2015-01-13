@@ -46,7 +46,7 @@
             <version>4.8.2</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
+        <!--<dependency>
             <groupId>org.easymock</groupId>
             <artifactId>easymockclassextension</artifactId>
             <version>2.4</version>
@@ -57,7 +57,7 @@
             <artifactId>btrace-client</artifactId>
             <version>1.2.3</version>
             <scope>test</scope>
-        </dependency>
+        </dependency>-->
 
         <dependency>
             <groupId>io.netty</groupId>

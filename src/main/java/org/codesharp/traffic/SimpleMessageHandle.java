@@ -26,20 +26,19 @@ public class SimpleMessageHandle implements MessageHandle {
 	
 	public static class Message {
 		public byte Command;
-		public byte Type;
 		public Object Destination;
+		public Map<Object, Object> Headers = new HashMap<Object, Object>();
 		public Stack<Object> Path = new Stack<Object>();
 		public Object Body;
-		public Map<Object, Object> Headers = new HashMap<Object, Object>();
 		
 		@Override
 		public String toString() {
 			return String.format("%s|%s|%s|%s|%s",
 					this.Command,
-					this.Type,
 					this.Destination,
-					this.Body,
-					Arrays.toString(this.Path.toArray()));
+					this.Headers,
+					Arrays.toString(this.Path.toArray()),
+					this.Body);
 		}
 	}
 }
