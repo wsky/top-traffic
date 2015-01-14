@@ -40,13 +40,15 @@ public class DRPCMessageHandleImpl extends MessageHandleImpl implements DRPCMess
 		return this.getId((Map<?, ?>) reply);
 	}
 	
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@SuppressWarnings({ "rawtypes" })
 	public Object newMessage(Object request) {
 		Map msg = (Map) request;
 		long dst = (Long) msg.get(DST);
 		long inId = this.getId(msg);
 		long outId = inId; // FIXME generaete global outId
-		msg.put("id", outId);
+		
+		this.setId(msg, outId);
+		
 		return this.newMessage(
 				Commands.MSG,
 				dst, 4,
@@ -54,15 +56,16 @@ public class DRPCMessageHandleImpl extends MessageHandleImpl implements DRPCMess
 				inId, outId);
 	}
 	
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@SuppressWarnings({ "rawtypes" })
 	public Object newAck(Object reply, Object msg) {
 		Map replyMsg = (Map) reply;
 		ByteBuf buf = (ByteBuf) msg;
-		long inId = (Long) this.getHeader(msg, 0);
-		replyMsg.put("id", inId);
-		// FIXME rewrite ack message.id with inId
+		
+		this.setId(replyMsg, this.getHeader(msg, 0));
+		
 		this.setCommand(buf, Commands.ACK);
 		this.setBody(buf, this.gson.toJson(msg).getBytes(UTF8));
+		
 		return buf;
 	}
 	
@@ -76,5 +79,10 @@ public class DRPCMessageHandleImpl extends MessageHandleImpl implements DRPCMess
 	
 	private long getId(Map<?, ?> msg) {
 		return (Long) msg.get("id");
+	}
+	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private void setId(Map msg, Object id) {
+		msg.put("id", id);
 	}
 }
