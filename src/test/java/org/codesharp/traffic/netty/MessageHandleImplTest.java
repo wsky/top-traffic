@@ -29,12 +29,7 @@ public class MessageHandleImplTest {
 		assertEquals((int) 2, handle.getHeader(msg, 2));
 		assertEquals((long) 3, handle.getHeader(msg, 3));
 		assertNull(handle.getNext(msg));
-		
-		ByteBuf body = handle.getMessageBody(msg);
-		assertEquals(5, body.readableBytes());
-		byte[] bytes = new byte[body.readableBytes()];
-		body.readBytes(bytes);
-		assertEquals("hello", new String(bytes));
+		assertBody(msg, 5, "hello");
 		
 		msg = handle.newMessage((byte) 1, 10, 0, "hello".getBytes());
 		System.out.println(msg.writerIndex());
@@ -86,6 +81,28 @@ public class MessageHandleImplTest {
 		handle.append(msg, 1L);
 	}
 	
+	@Test
+	public void set_command_test() {
+		ByteBuf msg = handle.newMessage((byte) 1, 10, 1, "hello".getBytes());
+		assertEquals(1, handle.getCommand(msg));
+		handle.setCommand(msg, (byte) 2);
+		assertEquals(2, handle.getCommand(msg));
+	}
+	
+	@Test
+	public void set_body_test() {
+		ByteBuf msg = handle.newMessage((byte) 1, 10, 1, "1".getBytes());
+		System.out.println(msg.writerIndex());
+		assertBody(msg, 1, "1");
+		
+		int len = handle.getLen(msg);
+		
+		handle.setBody(msg, "12".getBytes());
+		System.out.println(msg.writerIndex());
+		assertEquals(len + 1, handle.getLen(msg));
+		assertBody(msg, 2, "12");
+	}
+	
 	private void path_test(int count) {
 		ByteBuf msg = handle.newMessage((byte) 1, 10, count, "hello".getBytes());
 		for (int i = 0; i < count; i++)
@@ -93,5 +110,13 @@ public class MessageHandleImplTest {
 		
 		while (count-- > 0)
 			assertEquals(new Long(count), handle.getNext(msg));
+	}
+	
+	private void assertBody(Object msg, int expectedLen, String expectedString) {
+		ByteBuf body = handle.getMessageBody(msg);
+		assertEquals(expectedLen, body.readableBytes());
+		byte[] bytes = new byte[body.readableBytes()];
+		body.readBytes(bytes);
+		assertEquals(expectedString, new String(bytes));
 	}
 }

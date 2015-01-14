@@ -3,6 +3,7 @@ package org.codesharp.traffic.netty;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 
+import org.codesharp.traffic.Commands;
 import org.codesharp.traffic.drpc.DRPCMessageHandle;
 
 public class DRPCMessageHandleImpl extends MessageHandleImpl implements DRPCMessageHandle {
@@ -23,14 +24,18 @@ public class DRPCMessageHandleImpl extends MessageHandleImpl implements DRPCMess
 	}
 	
 	public Object newMessage(Object request) {
-		ByteBuf buf = this.allocator.buffer();
-		// FIXME write new message to buffer
-		return buf;
+		long dst = 1L;
+		long inId = 0L;
+		// FIXME generaete global outId
+		long outId = 0L;
+		return this.newMessage(Commands.MSG, dst, 4, "".getBytes(), inId, outId);
 	}
 	
 	public Object newAck(Object reply, Object msg) {
 		ByteBuf buf = (ByteBuf) msg;
-		// FIXME rewrite ack message to buffer
+		// FIXME rewrite ack message.id with inId
+		this.setCommand(buf, Commands.ACK);
+		this.setBody(buf, "".getBytes());
 		return buf;
 	}
 	

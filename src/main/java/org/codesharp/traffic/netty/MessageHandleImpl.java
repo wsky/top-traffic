@@ -176,7 +176,30 @@ public class MessageHandleImpl implements MessageHandle {
 		return buf;
 	}
 	
-	private int getHeaderLen(ByteBuf buf) {
+	protected void setCommand(ByteBuf buf, byte cmd) {
+		buf.setByte(0, cmd);
+	}
+	
+	protected void setBody(ByteBuf buf, byte[] body) {
+		int len = this.getLen(buf);
+		int headerLen = this.getHeaderLen(buf);
+		int pathLen = buf.getByte(HEADER_LEN + 1 + headerLen);
+		int bodyLen = buf.getInt(HEADER_LEN + 1 + headerLen + 1 + pathLen);
+		int bodyBegin = HEADER_LEN + 1 + headerLen + 1 + pathLen + 4;
+		
+		// reset len
+		buf.setInt(1, len + (body.length - bodyLen));
+		// reset body-len
+		buf.setInt(HEADER_LEN + 1 + headerLen + 1 + pathLen, body.length);
+		buf.setIndex(0, bodyBegin);
+		buf.writeBytes(body);
+	}
+	
+	protected int getLen(ByteBuf buf) {
+		return buf.getInt(1);
+	}
+	
+	protected int getHeaderLen(ByteBuf buf) {
 		return buf.getByte(HEADER_LEN);
 	}
 }
