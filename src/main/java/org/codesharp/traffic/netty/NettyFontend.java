@@ -1,16 +1,14 @@
 package org.codesharp.traffic.netty;
 
 import org.codesharp.traffic.Node;
-import org.codesharp.traffic.drpc.DRPCMessageHandle;
 import org.codesharp.traffic.drpc.Frontend;
 
 public class NettyFontend extends Frontend {
-	public NettyFontend(Node local, DRPCMessageHandle handle) {
-		super(local, handle);
-	}
+	private DRPCMessageHandleImpl handleImpl;
 	
-	@Override
-	protected void internalSend(Object msg) {
+	public NettyFontend(Node local, DRPCMessageHandleImpl handle) {
+		super(local, handle);
+		this.handleImpl = handle;
 	}
 	
 	@Override
@@ -18,4 +16,12 @@ public class NettyFontend extends Frontend {
 		return null;
 	}
 	
+	@Override
+	public void onMessage(Object msg) {
+		super.onMessage(this.handleImpl.resolve(msg));
+	}
+	
+	@Override
+	protected void internalSend(Object msg) {
+	}
 }
