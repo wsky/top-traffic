@@ -21,7 +21,7 @@ import com.google.gson.Gson;
  * { type:'REP', id:0 }
  */
 public class DRPCMessageHandleImpl extends MessageHandleImpl implements DRPCMessageHandle {
-	public final static String type = "type";
+	public final static String TYPE = "type";
 	public final static String REQ = "REQ";
 	public final static String REP = "REP";
 	public final static String ID = "id";
@@ -44,11 +44,11 @@ public class DRPCMessageHandleImpl extends MessageHandleImpl implements DRPCMess
 	}
 	
 	public boolean isRequest(Object msg) {
-		return ((Map<?, ?>) msg).get(type).equals(REQ);
+		return ((Map<?, ?>) msg).get(TYPE).equals(REQ);
 	}
 	
 	public boolean isReply(Object msg) {
-		return ((Map<?, ?>) msg).get(type).equals(REP);
+		return ((Map<?, ?>) msg).get(TYPE).equals(REP);
 	}
 	
 	public long getId(Map<?, ?> msg) {
