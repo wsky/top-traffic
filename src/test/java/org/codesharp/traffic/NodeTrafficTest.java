@@ -153,7 +153,7 @@ public class NodeTrafficTest {
 	}
 	
 	private void assertPath(Object... args) {
-		assertEquals(args.length, path.size());
+		int size = path.size();
 		int i = 0;
 		Object p;
 		while ((p = path.poll()) != null) {
@@ -162,5 +162,7 @@ public class NodeTrafficTest {
 			System.out.print(" <-> ");
 		}
 		System.out.println();
+		
+		assertEquals(args.length, size);
 	}
 }
