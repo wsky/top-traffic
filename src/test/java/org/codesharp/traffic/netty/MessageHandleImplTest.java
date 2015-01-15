@@ -37,6 +37,19 @@ public class MessageHandleImplTest {
 	}
 	
 	@Test
+	public void big_msg_and_buffer_auto_enlarge_test() {
+		ByteBuf msg = handle.newMessage(
+				(byte) 1, 10, 4,
+				new byte[102400],
+				(byte) 0,
+				(short) 1,
+				(int) 2,
+				(long) 3);
+		System.out.println(msg.writerIndex());
+		System.out.println(msg.getInt(1));
+	}
+	
+	@Test
 	public void header_test() {
 		ByteBuf msg = handle.newMessage((byte) 1, 10, 4, "hello".getBytes(), (byte) 0);
 		assertEquals((byte) 0, handle.getHeader(msg, 0));
