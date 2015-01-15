@@ -30,10 +30,14 @@ public class DRPCTrafficTest extends NodeTrafficTest {
 	}
 	
 	@Override
-	protected Connection newConnection(final Object id, final Node local, final Connection remote) {
+	protected Connection newConnection(Object id, Node local, Connection remote) {
 		if (!id.equals(n2_n1_id) && !id.equals(n2_n4_id) && !id.equals(n3_n4_id))
 			return super.newConnection(id, local, remote);
-		
+		else
+			return newFrontend(id, local, remote);
+	}
+	
+	protected Frontend newFrontend(final Object id, final Node local, final Connection remote) {
 		return new Frontend(local, handle) {
 			@Override
 			public Object id() {
