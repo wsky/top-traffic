@@ -98,6 +98,8 @@ public class DRPCMessageHandleImpl extends MessageHandleImpl implements DRPCMess
 	}
 	
 	public Long getOutcomeId(Object msg) {
+		// HACK retain buffer reused for reply
+		((ByteBuf) msg).retain();
 		return (Long) this.getHeader(msg, 1);
 	}
 	
