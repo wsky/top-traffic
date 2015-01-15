@@ -97,7 +97,7 @@ public class DRPCMessageHandleImpl extends MessageHandleImpl implements DRPCMess
 		return (Long) this.getHeader(msg, 0);
 	}
 	
-	public Long getOutId(Object msg) {
+	public Long getOutcomeId(Object msg) {
 		return (Long) this.getHeader(msg, 1);
 	}
 	

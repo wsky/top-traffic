@@ -39,7 +39,7 @@ public abstract class Frontend extends Connection {
 	
 	private void tryPutOutgoing(Object msg) {
 		if (this.handle.getCommand(msg) == Commands.MSG)
-			this.outgoings.put(this.handle.getOutId(msg), msg);
+			this.outgoings.put(this.handle.getOutcomeId(msg), msg);
 	}
 	
 	private Object getOutgoing(Object reply) {

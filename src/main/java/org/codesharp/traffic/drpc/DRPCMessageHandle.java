@@ -11,7 +11,7 @@ public interface DRPCMessageHandle extends MessageHandle {
 	
 	Object newAck(Object reply, Object msg);
 	
-	Object getOutId(Object msg);
+	Object getOutcomeId(Object msg);
 	
 	Object getReplyId(Object reply);
 	

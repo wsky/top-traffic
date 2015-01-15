@@ -33,7 +33,7 @@ public class SimpleDRPCMessageHandle extends SimpleMessageHandle implements DRPC
 		return ack;
 	}
 	
-	public Object getOutId(Object msg) {
+	public Object getOutcomeId(Object msg) {
 		return ((Message) msg).Headers.get("out_id");
 	}
 	

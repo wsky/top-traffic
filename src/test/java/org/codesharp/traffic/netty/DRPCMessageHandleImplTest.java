@@ -45,14 +45,14 @@ public class DRPCMessageHandleImplTest {
 		assertEquals(Commands.MSG, handle.getCommand(msg));
 		assertEquals(1234L, handle.getDestination(msg));
 		assertEquals(1024L, handle.getIncomeId(msg));
-		assertEquals(1024L, handle.getOutId(msg).longValue());
+		assertEquals(1024L, handle.getOutcomeId(msg).longValue());
 		assertBody(msg, request_out);
 		
 		msg = handle.newAck(handle.resolve(reply), msg);
 		assertEquals(Commands.ACK, handle.getCommand(msg));
 		assertEquals(1234L, handle.getDestination(msg));
 		assertEquals(1024L, handle.getIncomeId(msg));
-		assertEquals(1024L, handle.getOutId(msg).longValue());
+		assertEquals(1024L, handle.getOutcomeId(msg).longValue());
 		assertBody(msg, reply_out);
 	}
 	
