@@ -1,10 +1,10 @@
 package org.codesharp.traffic.netty;
 
-import java.nio.charset.Charset;
 import java.util.Map;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
+import io.netty.util.CharsetUtil;
 
 import org.codesharp.traffic.Commands;
 import org.codesharp.traffic.drpc.DRPCMessageHandle;
@@ -26,8 +26,6 @@ public class DRPCMessageHandleImpl extends MessageHandleImpl implements DRPCMess
 	public final static String REP = "REP";
 	public final static String ID = "id";
 	public final static String DST = "to";
-	
-	private final static Charset UTF8 = Charset.forName("UTF-8");
 	
 	private Gson gson = new Gson();
 	
@@ -107,12 +105,20 @@ public class DRPCMessageHandleImpl extends MessageHandleImpl implements DRPCMess
 		return this.getMessageBody(msg);
 	}
 	
+	@Override
+	public Object unknownDestination(Object msg) {
+		super.unknownDestination(msg);
+		// FIXME support errorcode at fontend
+		this.setBody((ByteBuf) msg, "{error:'unknownDestination'}".getBytes(CharsetUtil.UTF_8));
+		return msg;
+	}
+	
 	@SuppressWarnings({ "rawtypes" })
 	private long getLong(Map msg, String key) {
 		return msg.containsKey(key) ? ((Number) msg.get(key)).longValue() : -1L;
 	}
 	
 	private byte[] parseBody(Object msg) {
-		return this.gson.toJson(msg).getBytes(UTF8);
+		return this.gson.toJson(msg).getBytes(CharsetUtil.UTF_8);
 	}
 }

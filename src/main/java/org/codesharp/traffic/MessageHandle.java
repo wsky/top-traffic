@@ -8,4 +8,6 @@ public interface MessageHandle {
 	Object getNext(Object msg);
 	
 	Object append(Object msg, Object from);
+	
+	Object unknownDestination(Object msg);
 }

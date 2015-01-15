@@ -24,6 +24,12 @@ public class SimpleMessageHandle implements MessageHandle {
 		return msg;
 	}
 	
+	public Object unknownDestination(Object msg) {
+		// FIXME add status to message
+		((Message) msg).Command = Commands.ACK;
+		return msg;
+	}
+	
 	public static class Message {
 		public byte Command;
 		public Object Destination;

@@ -35,6 +35,7 @@ public abstract class Frontend extends Connection {
 	
 	@Override
 	public void send(Object msg) {
+		// FIXME check msg status
 		this.tryPutOutgoing(msg);
 		this.internalSend(this.handle.getBody(msg));
 	}

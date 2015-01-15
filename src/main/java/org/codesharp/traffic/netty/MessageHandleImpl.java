@@ -4,6 +4,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 
 import org.codesharp.traffic.Asserter;
+import org.codesharp.traffic.Commands;
 import org.codesharp.traffic.MessageHandle;
 
 /***
@@ -176,6 +177,12 @@ public class MessageHandleImpl implements MessageHandle {
 		
 		buf.setIndex(bodyBegin, bodyBegin + bodyLen);
 		return buf;
+	}
+	
+	public Object unknownDestination(Object msg) {
+		// FIXME add status to message
+		this.setCommand((ByteBuf) msg, Commands.ACK);
+		return msg;
 	}
 	
 	protected void setCommand(ByteBuf buf, byte cmd) {

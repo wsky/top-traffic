@@ -80,6 +80,7 @@ public class WebSocketServerTest {
 						
 						@Override
 						protected void internalSend(Object msg) {
+							renderBody((ByteBuf) msg);
 							ctx.channel().write(new TextWebSocketFrame((ByteBuf) msg));
 						}
 					};
@@ -100,5 +101,11 @@ public class WebSocketServerTest {
 				}
 			});
 		}
+	}
+	
+	private void renderBody(ByteBuf msg) {
+		byte[] bytes = new byte[msg.readableBytes()];
+		msg.getBytes(msg.readerIndex(), bytes);
+		System.out.println(new String(bytes));
 	}
 }

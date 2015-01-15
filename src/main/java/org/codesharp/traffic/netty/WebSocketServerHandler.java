@@ -44,6 +44,12 @@ public abstract class WebSocketServerHandler extends SimpleChannelInboundHandler
 	}
 	
 	@Override
+	public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+		// if read and write at once event, write will be executed until next event, call flush to force write
+		ctx.flush();
+	}
+	
+	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
 		logger.error("exceptionCaught", cause);
 		ctx.close();
