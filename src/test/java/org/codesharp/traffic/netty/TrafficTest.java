@@ -2,15 +2,9 @@ package org.codesharp.traffic.netty;
 
 import io.netty.buffer.ByteBufAllocator;
 
-import org.codesharp.traffic.Connection;
-import org.codesharp.traffic.MessageHandle;
-import org.codesharp.traffic.Node;
 import org.codesharp.traffic.drpc.DRPCTrafficTest;
-import org.codesharp.traffic.drpc.Frontend;
 
 public class TrafficTest extends DRPCTrafficTest {
-	private DRPCMessageHandleImpl handle = new DRPCMessageHandleImpl(ByteBufAllocator.DEFAULT);
-	
 	public TrafficTest() {
 		n1_flag = 1L;
 		n2_flag = 2L;
@@ -23,8 +17,8 @@ public class TrafficTest extends DRPCTrafficTest {
 	}
 	
 	@Override
-	protected MessageHandle newHandle() {
-		return handle;
+	protected DRPCMessageHandleImpl newHandle() {
+		return new DRPCMessageHandleImpl(ByteBufAllocator.DEFAULT);
 	}
 	
 	@Override
@@ -43,29 +37,5 @@ public class TrafficTest extends DRPCTrafficTest {
 				DRPCMessageHandleImpl.TYPE,
 				DRPCMessageHandleImpl.REP,
 				DRPCMessageHandleImpl.ID);
-	}
-	
-	@Override
-	protected Frontend newFrontend(final Object id, final Node local, final Connection remote) {
-		return new NettyFontend(local, handle) {
-			@Override
-			public Object id() {
-				return id;
-			}
-			
-			@Override
-			protected void internalSend(Object msg) {
-				System.out.println(String.format("node#%s -> conn#%s: %s", local.flag(), this.id(), msg));
-				if (remote != null)
-					remote.onMessage(msg);
-			}
-			
-			@Override
-			public void onMessage(Object msg) {
-				path.add(this.id());
-				System.out.println(String.format("network -> conn#%s: %s", this.id(), msg));
-				super.onMessage(msg);
-			}
-		};
 	}
 }

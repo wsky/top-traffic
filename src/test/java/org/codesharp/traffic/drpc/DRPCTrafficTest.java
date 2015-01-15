@@ -1,17 +1,14 @@
 package org.codesharp.traffic.drpc;
 
 import org.codesharp.traffic.Connection;
-import org.codesharp.traffic.MessageHandle;
 import org.codesharp.traffic.Node;
 import org.codesharp.traffic.NodeTrafficTest;
 import org.codesharp.traffic.drpc.SimpleDRPCMessageHandle.DRPCMessage;
 
 public class DRPCTrafficTest extends NodeTrafficTest {
-	private DRPCMessageHandle handle = new SimpleDRPCMessageHandle();
-	
 	@Override
-	protected MessageHandle newHandle() {
-		return handle;
+	protected DRPCMessageHandle newHandle() {
+		return new SimpleDRPCMessageHandle();
 	}
 	
 	@Override
@@ -38,7 +35,7 @@ public class DRPCTrafficTest extends NodeTrafficTest {
 	}
 	
 	protected Frontend newFrontend(final Object id, final Node local, final Connection remote) {
-		return new Frontend(local, handle) {
+		return new Frontend(local, newHandle()) {
 			@Override
 			public Object id() {
 				return id;

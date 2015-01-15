@@ -4,6 +4,10 @@ import org.codesharp.traffic.Commands;
 import org.codesharp.traffic.SimpleMessageHandle;
 
 public class SimpleDRPCMessageHandle extends SimpleMessageHandle implements DRPCMessageHandle {
+	public Object resolve(Object msg) {
+		return msg;
+	}
+	
 	public boolean isRequest(Object msg) {
 		return DRPCMessage.REQ.equals(((DRPCMessage) msg).Command);
 	}

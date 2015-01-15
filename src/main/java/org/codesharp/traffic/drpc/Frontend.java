@@ -21,6 +21,8 @@ public abstract class Frontend extends Connection {
 	
 	@Override
 	public void onMessage(Object msg) {
+		msg = this.handle.resolve(msg);
+		
 		if (this.handle.isRequest(msg))
 			msg = this.handle.newMessage(msg);
 		else if (this.handle.isReply(msg))
