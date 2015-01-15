@@ -10,6 +10,8 @@ import org.codesharp.traffic.MessageHandle;
  * 
  * https://github.com/wsky/top-traffic/issues/2#issuecomment-66725466
  * 
+ * Internal message protocol
+ * 
  * +-----+-----+-----+------------+--------------+----------+-------------+----------+------+
  * | CMD | Len | Dst | Header-Len |   Headers    | Path-Len |    Path     | Body-Len | Body |
  * |     |     |     |            |--------------|          |-------------|          |      |
