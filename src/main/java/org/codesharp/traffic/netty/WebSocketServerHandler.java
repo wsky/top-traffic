@@ -1,6 +1,8 @@
 package org.codesharp.traffic.netty;
 
 import org.codesharp.traffic.drpc.Frontend;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -26,6 +28,7 @@ import static io.netty.handler.codec.http.HttpResponseStatus.*;
 import static io.netty.handler.codec.http.HttpVersion.*;
 
 public abstract class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> {
+	private final static Logger logger = LoggerFactory.getLogger(WebSocketServerHandler.class);
 	private WebSocketServerHandshaker handshaker;
 	private Frontend frontend;
 	
@@ -42,29 +45,21 @@ public abstract class WebSocketServerHandler extends SimpleChannelInboundHandler
 	
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-		cause.printStackTrace();
+		logger.error("exceptionCaught", cause);
 		ctx.close();
 	}
 	
-	@Override
-	public void channelReadComplete(ChannelHandlerContext ctx) {
-		ctx.flush();
-	}
-	
 	private void handleHttpRequest(ChannelHandlerContext ctx, FullHttpRequest req) {
-		// Handle a bad request.
 		if (!req.decoderResult().isSuccess()) {
 			sendHttpResponse(ctx, req, new DefaultFullHttpResponse(HTTP_1_1, BAD_REQUEST));
 			return;
 		}
 		
-		// Allow only GET methods.
 		if (req.method() != GET) {
 			sendHttpResponse(ctx, req, new DefaultFullHttpResponse(HTTP_1_1, FORBIDDEN));
 			return;
 		}
 		
-		// Handshake
 		WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(req.uri(), null, false);
 		handshaker = wsFactory.newHandshaker(req);
 		if (handshaker == null) {
@@ -76,7 +71,7 @@ public abstract class WebSocketServerHandler extends SimpleChannelInboundHandler
 			this.frontend = this.newFrontend(ctx, req);
 			handshaker.handshake(ctx.channel(), req);
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("handshake error", e);
 			sendHttpResponse(ctx, req, new DefaultFullHttpResponse(HTTP_1_1, UNAUTHORIZED));
 		}
 	}
@@ -98,7 +93,7 @@ public abstract class WebSocketServerHandler extends SimpleChannelInboundHandler
 		try {
 			this.frontend.onMessage(((TextWebSocketFrame) frame).text());
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("onMessage error", e);
 			handshaker.close(ctx.channel(),
 					new CloseWebSocketFrame(true, 0,
 							frame.content().clear()
@@ -110,7 +105,6 @@ public abstract class WebSocketServerHandler extends SimpleChannelInboundHandler
 	
 	private static void sendHttpResponse(
 			ChannelHandlerContext ctx, FullHttpRequest req, FullHttpResponse res) {
-		// Generate an error page if response getStatus code is not OK (200).
 		if (res.status().code() != 200) {
 			ByteBuf buf = Unpooled.copiedBuffer(res.status().toString(), CharsetUtil.UTF_8);
 			res.content().writeBytes(buf);
@@ -118,7 +112,6 @@ public abstract class WebSocketServerHandler extends SimpleChannelInboundHandler
 			HttpHeaders.setContentLength(res, res.content().readableBytes());
 		}
 		
-		// Send the response and close the connection if necessary.
 		ChannelFuture f = ctx.channel().writeAndFlush(res);
 		if (!HttpHeaders.isKeepAlive(req) || res.status().code() != 200) {
 			f.addListener(ChannelFutureListener.CLOSE);
