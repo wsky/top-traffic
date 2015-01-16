@@ -10,6 +10,10 @@ public class SimpleMessageHandle implements MessageHandle {
 		return ((Message) msg).Command;
 	}
 	
+	public byte getStatus(Object msg) {
+		return ((Message) msg).Status;
+	}
+	
 	public Object getDestination(Object msg) {
 		return ((Message) msg).Destination;
 	}
@@ -32,6 +36,7 @@ public class SimpleMessageHandle implements MessageHandle {
 	
 	public static class Message {
 		public byte Command;
+		public byte Status;
 		public Object Destination;
 		public Map<Object, Object> Headers = new HashMap<Object, Object>();
 		public Stack<Object> Path = new Stack<Object>();
@@ -39,8 +44,9 @@ public class SimpleMessageHandle implements MessageHandle {
 		
 		@Override
 		public String toString() {
-			return String.format("%s|%s|%s|%s|%s",
+			return String.format("%s|%s|%s|%s|%s|%s",
 					this.Command,
+					this.Status,
 					this.Destination,
 					this.Headers,
 					Arrays.toString(this.Path.toArray()),
