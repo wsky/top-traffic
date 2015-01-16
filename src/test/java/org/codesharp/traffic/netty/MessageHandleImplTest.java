@@ -4,6 +4,8 @@ import static org.junit.Assert.*;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 
+import org.codesharp.traffic.Commands;
+import org.codesharp.traffic.Status;
 import org.junit.Test;
 
 public class MessageHandleImplTest {
@@ -12,7 +14,9 @@ public class MessageHandleImplTest {
 	@Test
 	public void new_msg_test() {
 		ByteBuf msg = handle.newMessage(
-				(byte) 1, 10, 4,
+				Commands.MSG,
+				Status.NORMAL,
+				10, 4,
 				"hello".getBytes(),
 				(byte) 0,
 				(short) 1,
@@ -20,9 +24,10 @@ public class MessageHandleImplTest {
 				(long) 3);
 		
 		System.out.println(msg.writerIndex());
-		System.out.println(msg.getInt(1));
-		assertEquals(msg.writerIndex(), msg.getInt(1) + 5);
-		assertEquals(1, handle.getCommand(msg));
+		System.out.println(handle.getLen(msg));
+		assertEquals(msg.writerIndex(), handle.getLen(msg) + 6);
+		assertEquals(Commands.MSG, handle.getCommand(msg));
+		assertEquals(Status.NORMAL, handle.getStatus(msg));
 		assertEquals(10L, handle.getDestination(msg));
 		assertEquals((byte) 0, handle.getHeader(msg, 0));
 		assertEquals((short) 1, handle.getHeader(msg, 1));
@@ -31,15 +36,17 @@ public class MessageHandleImplTest {
 		assertNull(handle.getNext(msg));
 		assertBody(msg, 5, "hello");
 		
-		msg = handle.newMessage((byte) 1, 10, 0, "hello".getBytes());
+		msg = handle.newMessage(Commands.MSG, Status.NORMAL, 10, 0, "hello".getBytes());
 		System.out.println(msg.writerIndex());
-		System.out.println(msg.getInt(1));
+		System.out.println(handle.getLen(msg));
 	}
 	
 	@Test
 	public void big_msg_and_buffer_auto_enlarge_test() {
 		ByteBuf msg = handle.newMessage(
-				(byte) 1, 10, 4,
+				Commands.MSG,
+				Status.NORMAL,
+				10, 4,
 				new byte[102400],
 				(byte) 0,
 				(short) 1,
@@ -51,32 +58,32 @@ public class MessageHandleImplTest {
 	
 	@Test
 	public void header_test() {
-		ByteBuf msg = handle.newMessage((byte) 1, 10, 4, "hello".getBytes(), (byte) 0);
+		ByteBuf msg = handle.newMessage(Commands.MSG, Status.NORMAL, 10, 4, "hello".getBytes(), (byte) 0);
 		assertEquals((byte) 0, handle.getHeader(msg, 0));
 		
-		msg = handle.newMessage((byte) 1, 10, 4, "hello".getBytes(), (byte) 0, (short) 1);
+		msg = handle.newMessage(Commands.MSG, Status.NORMAL, 10, 4, "hello".getBytes(), (byte) 0, (short) 1);
 		assertEquals((byte) 0, handle.getHeader(msg, 0));
 		assertEquals((short) 1, handle.getHeader(msg, 1));
 		
-		msg = handle.newMessage((byte) 1, 10, 4, "hello".getBytes(), (byte) 0, (byte) 1);
+		msg = handle.newMessage(Commands.MSG, Status.NORMAL, 10, 4, "hello".getBytes(), (byte) 0, (byte) 1);
 		assertEquals((byte) 0, handle.getHeader(msg, 0));
 		assertEquals((byte) 1, handle.getHeader(msg, 1));
 		
-		msg = handle.newMessage((byte) 1, 10, 4, "hello".getBytes(), (byte) 0);
+		msg = handle.newMessage(Commands.MSG, Status.NORMAL, 10, 4, "hello".getBytes());
 	}
 	
 	@Test(expected = RuntimeException.class)
 	public void header_overflow_test() {
-		ByteBuf msg = handle.newMessage((byte) 1, 10, 4, "hello".getBytes(), (byte) 0);
+		ByteBuf msg = handle.newMessage(Commands.MSG, Status.NORMAL, 10, 4, "hello".getBytes(), (byte) 0);
 		assertEquals((short) 1, handle.getHeader(msg, 1));
 	}
 	
 	@Test
 	public void path_test() {
-		ByteBuf msg = handle.newMessage((byte) 1, 10, 0, "hello".getBytes());
+		ByteBuf msg = handle.newMessage(Commands.MSG, Status.NORMAL, 10, 0, "hello".getBytes());
 		assertNull(handle.getNext(msg));
 		
-		msg = handle.newMessage((byte) 1, 10, 2, "hello".getBytes());
+		msg = handle.newMessage(Commands.MSG, Status.NORMAL, 10, 2, "hello".getBytes());
 		handle.append(msg, 1L);
 		assertEquals(1L, handle.getNext(msg));
 		assertNull(handle.getNext(msg));
@@ -89,22 +96,22 @@ public class MessageHandleImplTest {
 	
 	@Test(expected = RuntimeException.class)
 	public void path_overflow_test() {
-		ByteBuf msg = handle.newMessage((byte) 1, 10, 1, "hello".getBytes());
+		ByteBuf msg = handle.newMessage(Commands.MSG, Status.NORMAL, 10, 1, "hello".getBytes());
 		handle.append(msg, 1L);
 		handle.append(msg, 1L);
 	}
 	
 	@Test
 	public void set_command_test() {
-		ByteBuf msg = handle.newMessage((byte) 1, 10, 1, "hello".getBytes());
-		assertEquals(1, handle.getCommand(msg));
+		ByteBuf msg = handle.newMessage(Commands.ACK, Status.NORMAL, 10, 1, "hello".getBytes());
+		assertEquals(Commands.ACK, handle.getCommand(msg));
 		handle.setCommand(msg, (byte) 2);
 		assertEquals(2, handle.getCommand(msg));
 	}
 	
 	@Test
 	public void set_body_test() {
-		ByteBuf msg = handle.newMessage((byte) 1, 10, 1, "1".getBytes());
+		ByteBuf msg = handle.newMessage(Commands.MSG, Status.NORMAL, 10, 1, "1".getBytes());
 		System.out.println(msg.writerIndex());
 		assertBody(msg, 1, "1");
 		
@@ -117,7 +124,7 @@ public class MessageHandleImplTest {
 	}
 	
 	private void path_test(int count) {
-		ByteBuf msg = handle.newMessage((byte) 1, 10, count, "hello".getBytes());
+		ByteBuf msg = handle.newMessage(Commands.MSG, Status.NORMAL, 10, count, "hello".getBytes());
 		for (int i = 0; i < count; i++)
 			handle.append(msg, new Long(i));
 		

@@ -22,8 +22,10 @@ import org.codesharp.traffic.Asserter;
 import org.codesharp.traffic.Node;
 import org.codesharp.traffic.NodeProxy;
 import org.codesharp.traffic.drpc.Frontend;
+import org.junit.Ignore;
 import org.junit.Test;
 
+@Ignore
 public class WebSocketServerTest {
 	DRPCMessageHandleImpl handle = new DRPCMessageHandleImpl(ByteBufAllocator.DEFAULT);
 	Node node = new Node(handle) {

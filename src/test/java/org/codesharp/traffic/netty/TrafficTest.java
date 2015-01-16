@@ -27,7 +27,7 @@ public class TrafficTest extends DRPCTrafficTest {
 				DRPCMessageHandleImpl.TYPE,
 				DRPCMessageHandleImpl.REQ,
 				DRPCMessageHandleImpl.ID,
-				DRPCMessageHandleImpl.DST,
+				DRPCMessageHandleImpl.TO,
 				dst);
 	}
 	

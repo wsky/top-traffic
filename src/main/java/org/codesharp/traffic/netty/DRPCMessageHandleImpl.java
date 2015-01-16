@@ -7,6 +7,7 @@ import io.netty.buffer.ByteBufAllocator;
 import io.netty.util.CharsetUtil;
 
 import org.codesharp.traffic.Commands;
+import org.codesharp.traffic.Status;
 import org.codesharp.traffic.drpc.DRPCMessageHandle;
 
 import com.google.gson.Gson;
@@ -25,7 +26,7 @@ public class DRPCMessageHandleImpl extends MessageHandleImpl implements DRPCMess
 	public final static String REQ = "REQ";
 	public final static String REP = "REP";
 	public final static String ID = "id";
-	public final static String DST = "to";
+	public final static String TO = "to";
 	
 	private Gson gson = new Gson();
 	
@@ -65,7 +66,7 @@ public class DRPCMessageHandleImpl extends MessageHandleImpl implements DRPCMess
 	@SuppressWarnings({ "rawtypes" })
 	public Object newMessage(Object request) {
 		Map msg = (Map) request;
-		long dst = this.getLong(msg, DST);
+		long dst = this.getLong(msg, TO);
 		long inId = this.getId(msg);
 		long outId = inId; // FIXME generaete global outId
 		
@@ -73,6 +74,7 @@ public class DRPCMessageHandleImpl extends MessageHandleImpl implements DRPCMess
 		
 		return this.newMessage(
 				Commands.MSG,
+				Status.NORMAL,
 				dst, 4,
 				this.parseBody(msg),
 				inId, outId);

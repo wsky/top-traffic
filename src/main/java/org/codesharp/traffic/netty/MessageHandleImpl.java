@@ -13,18 +13,20 @@ import org.codesharp.traffic.MessageHandle;
  * 
  * Internal message protocol
  * 
- * +-----+-----+-----+------------+--------------+----------+-------------+----------+------+
- * | CMD | Len | Dst | Header-Len |   Headers    | Path-Len |    Path     | Body-Len | Body |
- * |     |     |     |            |--------------|          |-------------|          |      |
- * |     |     |     |            | Type | Value |          | Flag | Path |          |      |
- * +-----+-----+-----+------------+------+-------+----------+------+------+----------+------+
- * |  1  |  4  |  8  |     1      |   1  |   N   |    1     |   1  |   8  |     4    |  N   |
- * +-----+-----+-----+------------+------+-------+----------+------+------+----------+------+
- * | 0/1 | int | long|    byte    | 1/2/ |       |   byte   |  0/1 | long |    int   |      |
- * +-----+-----+-----+------------+------+-------+----------+------+------+----------+------+
+ * +-----+--------+-----+-----+------------+--------------+----------+-------------+----------+------+
+ * | CMD | Status | Len | Dst | Header-Len |   Headers    | Path-Len |    Path     | Body-Len | Body |
+ * |     |        |     |     |            |--------------|          |-------------|          |      |
+ * |     |        |     |     |            | Type | Value |          | Flag | Path |          |      |
+ * +-----+--------+-----+-----+------------+------+-------+----------+------+------+----------+------+
+ * |  1  |    1   |  4  |  8  |     1      |   1  |   N   |    1     |   1  |   8  |     4    |  N   |
+ * +-----+--------+-----+-----+------------+------+-------+----------+------+------+----------+------+
+ * | 0/1 |  byte  | int | long|    byte    | 1/2/ |       |   byte   |  0/1 | long |    int   |      |
+ * +-----+--------+-----+-----+------------+------+-------+----------+------+------+----------+------+
  */
 public class MessageHandleImpl implements MessageHandle {
-	private final static int HEADER_LEN = 13;
+	private final static int LEN = 1 + 1;
+	private final static int DST = LEN + 4;
+	private final static int HEADER_LEN = DST + 8;
 	private final static int PATH_SIZE = 1 + 8;
 	private final static byte PATH_UNSET = 0;
 	private final static byte PATH_SET = 1;
@@ -35,10 +37,11 @@ public class MessageHandleImpl implements MessageHandle {
 		this.allocator = allocator;
 	}
 	
-	public ByteBuf newMessage(byte cmd, long dst, int pathCount, byte[] body, Object... headers) {
+	public ByteBuf newMessage(byte cmd, byte status, long dst, int pathCount, byte[] body, Object... headers) {
 		ByteBuf buf = this.allocator.buffer();
 		buf.resetWriterIndex();
 		buf.writeByte(cmd);
+		buf.writeByte(status);
 		
 		int len = 0;
 		buf.writeInt(len);
@@ -66,7 +69,7 @@ public class MessageHandleImpl implements MessageHandle {
 			} else
 				Asserter.throwUnsupportedHeader(o != null ? o.getClass() : o);
 		}
-		buf.setByte(1 + 4 + 8, headerLen);
+		buf.setByte(HEADER_LEN, headerLen);
 		len += headerLen;
 		
 		byte pathLen = (byte) (pathCount * PATH_SIZE);
@@ -82,7 +85,7 @@ public class MessageHandleImpl implements MessageHandle {
 		buf.writeBytes(body);
 		len += (4 + body.length);
 		
-		buf.setInt(1, len);
+		this.setLen(buf, len);
 		
 		return buf;
 	}
@@ -91,8 +94,12 @@ public class MessageHandleImpl implements MessageHandle {
 		return ((ByteBuf) msg).getByte(0);
 	}
 	
+	public byte getStatus(Object msg) {
+		return ((ByteBuf) msg).getByte(1);
+	}
+	
 	public Object getDestination(Object msg) {
-		return ((ByteBuf) msg).getLong(5);
+		return ((ByteBuf) msg).getLong(DST);
 	}
 	
 	public Object getHeader(Object msg, int index) {
@@ -197,7 +204,7 @@ public class MessageHandleImpl implements MessageHandle {
 		int bodyBegin = HEADER_LEN + 1 + headerLen + 1 + pathLen + 4;
 		
 		// reset len
-		buf.setInt(1, len + (body.length - bodyLen));
+		this.setLen(buf, len + (body.length - bodyLen));
 		// reset body-len
 		buf.setInt(HEADER_LEN + 1 + headerLen + 1 + pathLen, body.length);
 		buf.setIndex(0, bodyBegin);
@@ -205,7 +212,11 @@ public class MessageHandleImpl implements MessageHandle {
 	}
 	
 	protected int getLen(ByteBuf buf) {
-		return buf.getInt(1);
+		return buf.getInt(LEN);
+	}
+	
+	protected void setLen(ByteBuf buf, int len) {
+		buf.setInt(LEN, len);
 	}
 	
 	protected int getHeaderLen(ByteBuf buf) {
