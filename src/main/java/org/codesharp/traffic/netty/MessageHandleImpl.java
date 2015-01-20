@@ -24,12 +24,12 @@ import org.codesharp.traffic.MessageHandle;
  * +-----+--------+-----+-----+------------+------+-------+----------+------+------+----------+------+
  */
 public class MessageHandleImpl implements MessageHandle {
-	private final static int LEN = 1 + 1;
-	private final static int DST = LEN + 4;
-	private final static int HEADER_LEN = DST + 8;
-	private final static int PATH_SIZE = 1 + 8;
-	private final static byte PATH_UNSET = 0;
-	private final static byte PATH_SET = 1;
+	public final static int LEN = 1 + 1;
+	public final static int DST = LEN + 4;
+	public final static int HEADER_LEN = DST + 8;
+	public final static int PATH_SIZE = 1 + 8;
+	public final static byte PATH_UNSET = 0;
+	public final static byte PATH_SET = 1;
 	
 	protected ByteBufAllocator allocator;
 	
