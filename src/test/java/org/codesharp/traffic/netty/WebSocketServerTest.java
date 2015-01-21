@@ -18,6 +18,7 @@ import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 
+import org.codesharp.traffic.Connection;
 import org.codesharp.traffic.Node;
 import org.codesharp.traffic.drpc.Frontend;
 import org.junit.Ignore;
@@ -72,7 +73,7 @@ public class WebSocketServerTest {
 					final long idAndFlag = System.currentTimeMillis();
 					System.out.println(idAndFlag);
 					
-					Frontend frontend = new Frontend(node, handle) {
+					Frontend frontend = new Frontend(new Connection(node) {
 						@Override
 						public Object id() {
 							return idAndFlag;
@@ -84,11 +85,11 @@ public class WebSocketServerTest {
 						}
 						
 						@Override
-						protected void internalSend(Object msg) {
+						public void send(Object msg) {
 							renderBody((ByteBuf) msg);
 							ctx.channel().write(new TextWebSocketFrame((ByteBuf) msg));
 						}
-					};
+					}, handle);
 					
 					node.accept(frontend);
 					

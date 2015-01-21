@@ -6,18 +6,27 @@ import java.util.concurrent.ConcurrentMap;
 import org.codesharp.traffic.Asserter;
 import org.codesharp.traffic.Commands;
 import org.codesharp.traffic.Connection;
-import org.codesharp.traffic.Node;
 
-public abstract class Frontend extends Connection {
+public class Frontend extends Connection {
+	private Connection conn;
 	private DRPCMessageHandle handle;
 	private ConcurrentMap<Object, Object> outgoings = new ConcurrentHashMap<Object, Object>();
 	
-	public Frontend(Node local, DRPCMessageHandle handle) {
-		super(local);
+	public Frontend(Connection conn, DRPCMessageHandle handle) {
+		super(null);
+		this.conn = conn;
 		this.handle = handle;
 	}
 	
-	protected abstract void internalSend(Object msg);
+	@Override
+	public Object id() {
+		return this.conn.id();
+	}
+	
+	@Override
+	public Object flag() {
+		return this.conn.flag();
+	}
 	
 	@Override
 	public void onMessage(Object msg) {
@@ -30,14 +39,14 @@ public abstract class Frontend extends Connection {
 		else
 			Asserter.throwUnsupported(msg);
 		
-		super.onMessage(msg);
+		this.conn.onMessage(msg);
 	}
 	
 	@Override
 	public void send(Object msg) {
 		// FIXME check msg status
 		this.tryPutOutgoing(msg);
-		this.internalSend(this.handle.getBody(msg));
+		this.conn.send(this.handle.getBody(msg));
 	}
 	
 	private void tryPutOutgoing(Object msg) {

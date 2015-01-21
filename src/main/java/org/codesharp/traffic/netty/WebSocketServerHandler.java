@@ -1,11 +1,11 @@
 package org.codesharp.traffic.netty;
 
-import org.codesharp.traffic.drpc.Frontend;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -14,7 +14,6 @@ import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
@@ -27,12 +26,14 @@ import static io.netty.handler.codec.http.HttpMethod.*;
 import static io.netty.handler.codec.http.HttpResponseStatus.*;
 import static io.netty.handler.codec.http.HttpVersion.*;
 
-public abstract class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> {
+public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> {
 	private final static Logger logger = LoggerFactory.getLogger(WebSocketServerHandler.class);
 	private WebSocketServerHandshaker handshaker;
-	private Frontend frontend;
+	private NettyConnection connection;
 	
-	protected abstract Frontend newFrontend(ChannelHandlerContext ctx, HttpRequest req) throws Exception;
+	public WebSocketServerHandler(NettyConnection connection) {
+		this.connection = connection;
+	}
 	
 	@Override
 	public void channelRead0(ChannelHandlerContext ctx, Object msg) {
@@ -45,7 +46,8 @@ public abstract class WebSocketServerHandler extends SimpleChannelInboundHandler
 	
 	@Override
 	public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-		// if read and write at once event, write will be executed until next event, call flush to force write
+		// if read and write at once event,
+		// write will be executed until next event, call flush to force write
 		ctx.flush();
 	}
 	
@@ -74,8 +76,9 @@ public abstract class WebSocketServerHandler extends SimpleChannelInboundHandler
 		}
 		
 		try {
-			this.frontend = this.newFrontend(ctx, req);
-			handshaker.handshake(ctx.channel(), req);
+			Channel ch = ctx.channel();
+			this.connection.channel(ch);
+			handshaker.handshake(ch, req);
 		} catch (Exception e) {
 			logger.error("handshake error", e);
 			sendHttpResponse(ctx, req, new DefaultFullHttpResponse(HTTP_1_1, UNAUTHORIZED));
@@ -97,7 +100,7 @@ public abstract class WebSocketServerHandler extends SimpleChannelInboundHandler
 		}
 		
 		try {
-			this.frontend.onMessage(((TextWebSocketFrame) frame).text());
+			this.connection.onMessage(((TextWebSocketFrame) frame).text());
 		} catch (Exception e) {
 			logger.error("onMessage error", e);
 			handshaker.close(ctx.channel(),
