@@ -100,7 +100,7 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 		}
 		
 		try {
-			this.connection.onMessage(((TextWebSocketFrame) frame).text());
+			this.connection.onWrappedMessage(((TextWebSocketFrame) frame).text());
 		} catch (Exception e) {
 			logger.error("onMessage error", e);
 			handshaker.close(ctx.channel(),

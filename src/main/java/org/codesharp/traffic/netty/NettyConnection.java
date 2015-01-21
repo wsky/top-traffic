@@ -54,13 +54,8 @@ public abstract class NettyConnection extends Connection {
 		this.channel.writeAndFlush(msg);
 	}
 	
-	@Override
-	public void onMessage(Object msg) {
-		// FIXME assert null
-		if (this.wrapped == this)
-			super.onMessage(msg);
-		else
-			this.wrapped.onMessage(msg);
+	public void onWrappedMessage(Object msg) {
+		this.wrapped.onMessage(msg);
 	}
 	
 	public ChannelHandler[] newHandlers(URI uri) {
@@ -75,7 +70,7 @@ public abstract class NettyConnection extends Connection {
 					
 					@Override
 					public void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
-						NettyConnection.this.wrapped.onMessage(msg);
+						NettyConnection.this.onWrappedMessage(msg);
 					}
 					
 					@Override

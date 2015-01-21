@@ -3,11 +3,13 @@ package org.codesharp.traffic.netty;
 import java.net.URI;
 
 import io.netty.buffer.ByteBufAllocator;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 
 import org.codesharp.traffic.Commands;
 import org.codesharp.traffic.Connection;
 import org.codesharp.traffic.Node;
 import org.codesharp.traffic.Status;
+import org.codesharp.traffic.drpc.Frontend;
 import org.junit.Test;
 
 public class NettySocketTest {
@@ -61,6 +63,63 @@ public class NettySocketTest {
 		
 		conn.send(handle.newMessage(Commands.MSG, Status.NORMAL, 0L, 2, "hi".getBytes()));
 		
+		Thread.sleep(1000);
+	}
+	
+	@Test
+	public void websocket_connection_test() throws Throwable {
+		final DRPCMessageHandleImpl handle = new DRPCMessageHandleImpl(ByteBufAllocator.DEFAULT);
+		final Node node = new Node(handle) {
+			@Override
+			protected void process(Object msg) {
+				System.out.println(msg);
+			}
+			
+			@Override
+			public Object flag() {
+				return "NODE";
+			}
+		};
+		
+		URI uri = new URI("ws://localhost:8890");
+		
+		NettyServer server = new NettyServer(uri.getPort()) {
+			@Override
+			protected NettyConnection newConnection() {
+				return new WebSocketConnection(node) {
+					@Override
+					public Object id() {
+						return 1L;
+					}
+					
+					@Override
+					public Object flag() {
+						return "client";
+					}
+					
+					@Override
+					protected Connection wrap(Connection conn) {
+						return new Frontend(conn, handle);
+					}
+				};
+			}
+		};
+		
+		server.start();
+		
+		WebSocketConnection conn = new WebSocketConnection(node, uri) {
+			@Override
+			public Object id() {
+				return 2L;
+			}
+			
+			@Override
+			public Object flag() {
+				return "server";
+			}
+		};
+		
+		conn.send(new TextWebSocketFrame("{ type:'REQ', id:1024, to:123 }"));
 		Thread.sleep(1000);
 	}
 }
