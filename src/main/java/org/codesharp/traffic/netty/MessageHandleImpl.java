@@ -187,8 +187,10 @@ public class MessageHandleImpl implements MessageHandle {
 	}
 	
 	public Object unknownDestination(Object msg) {
+		// HACK retain buffer reused for reply
+		ByteBuf buf = ((ByteBuf) msg).retain();
 		// FIXME add status to message
-		this.setCommand((ByteBuf) msg, Commands.ACK);
+		this.setCommand(buf, Commands.ACK);
 		return msg;
 	}
 	

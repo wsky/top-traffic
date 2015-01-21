@@ -19,6 +19,10 @@ public class MessageDecoder extends ByteToMessageDecoder {
 	private State state = State.LEN;
 	private ByteBuf buf;
 	
+	public MessageDecoder(MessageHandleImpl handle) {
+		this.handle = handle;
+	}
+	
 	@Override
 	protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
 		switch (this.state) {
