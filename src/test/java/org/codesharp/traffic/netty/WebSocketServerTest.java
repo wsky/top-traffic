@@ -18,9 +18,7 @@ import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 
-import org.codesharp.traffic.Asserter;
 import org.codesharp.traffic.Node;
-import org.codesharp.traffic.NodeProxy;
 import org.codesharp.traffic.drpc.Frontend;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -81,23 +79,18 @@ public class WebSocketServerTest {
 						}
 						
 						@Override
+						public Object flag() {
+							return idAndFlag;
+						}
+						
+						@Override
 						protected void internalSend(Object msg) {
 							renderBody((ByteBuf) msg);
 							ctx.channel().write(new TextWebSocketFrame((ByteBuf) msg));
 						}
 					};
 					
-					node.accept(new NodeProxy() {
-						@Override
-						public void send(Object msg) {
-							Asserter.throwUnsupported(null);
-						}
-						
-						@Override
-						public Object flag() {
-							return idAndFlag;
-						}
-					}, frontend);
+					node.accept(frontend);
 					
 					return frontend;
 				}

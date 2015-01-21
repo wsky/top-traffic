@@ -24,9 +24,10 @@ public abstract class Node {
 		this.next = next;
 	}
 	
-	public void accept(NodeProxy remote, Connection conn) {
+	public void accept(Connection conn) {
 		this.nodes.put(conn.id(), conn);
-		this.routes.put(remote.flag(), new Connection[] { conn });
+		// FIXME connection list
+		this.routes.put(conn.flag(), new Connection[] { conn });
 	}
 	
 	public void onMessage(Object msg, Connection from) {

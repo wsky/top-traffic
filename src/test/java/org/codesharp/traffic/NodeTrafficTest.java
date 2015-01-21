@@ -33,11 +33,11 @@ public class NodeTrafficTest {
 		
 		Node n2 = newNode(handle, n2_flag);
 		// n1,n2 connect
-		Connection n1_n2 = newConnection(n2_n1_id, n2);
-		n2.accept(newProxy(n1_flag), n1_n2);
+		Connection n1_n2 = newConnection(n2_n1_id, n1_flag, n2);
+		n2.accept(n1_n2);
 		// n2,n4 connect
-		Connection n2_n4 = newConnection(n2_n4_id, n2);
-		n2.accept(newProxy(n4_flag), n2_n4);
+		Connection n2_n4 = newConnection(n2_n4_id, n4_flag, n2);
+		n2.accept(n2_n4);
 		
 		n1_n2.onMessage(msg);
 		n2_n4.onMessage(newAck(msg));
@@ -53,17 +53,17 @@ public class NodeTrafficTest {
 		Node n2 = newNode(handle, n2_flag);
 		Node n3 = newNode(handle, n3_flag);
 		// n1,n2 connect
-		Connection n1_n2 = newConnection(n2_n1_id, n2);
-		n2.accept(newProxy(n1_flag), n1_n2);
+		Connection n1_n2 = newConnection(n2_n1_id, n1_flag, n2);
+		n2.accept(n1_n2);
 		// n3,n4 connect
-		Connection n3_n4 = newConnection(n3_n4_id, n3);
-		n3.accept(newProxy(n4_flag), n3_n4);
+		Connection n3_n4 = newConnection(n3_n4_id, n4_flag, n3);
+		n3.accept(n3_n4);
 		// n2 next to n3
-		n2.setNext(newProxy(n3_flag, n2_flag, newConnection(n2_n3_id, n3)));
+		n2.setNext(newProxy(n3_flag, n2_flag, newConnection(n2_n3_id, n2_flag, n3)));
 		// n2-n3
-		Connection n2_n3 = newConnection(n2_n3_id, n2);
-		Connection n3_n2 = newConnection(n2_n3_id, n3, n2_n3);
-		n3.accept(newProxy(n2_flag), n3_n2);
+		Connection n2_n3 = newConnection(n2_n3_id, n3_flag, n2);
+		Connection n3_n2 = newConnection(n2_n3_id, n2_flag, n3, n2_n3);
+		n3.accept(n3_n2);
 		
 		n1_n2.onMessage(msg);
 		n3_n4.onMessage(newAck(msg));
@@ -125,11 +125,11 @@ public class NodeTrafficTest {
 		};
 	}
 	
-	protected Connection newConnection(final Object id, final Node local) {
-		return newConnection(id, local, null);
+	protected Connection newConnection(Object id, Object flag, final Node local) {
+		return newConnection(id, flag, local, null);
 	}
 	
-	protected Connection newConnection(final Object id, final Node local, final Connection remote) {
+	protected Connection newConnection(final Object id, final Object flag, final Node local, final Connection remote) {
 		return new Connection(local) {
 			@Override
 			public void send(Object msg) {
@@ -141,6 +141,11 @@ public class NodeTrafficTest {
 			@Override
 			public Object id() {
 				return id;
+			}
+			
+			@Override
+			public Object flag() {
+				return flag;
 			}
 			
 			@Override

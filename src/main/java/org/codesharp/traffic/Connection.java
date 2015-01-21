@@ -9,6 +9,8 @@ public abstract class Connection {
 	
 	public abstract Object id();
 	
+	public abstract Object flag();
+	
 	public abstract void send(Object msg);
 	
 	public void onMessage(Object msg) {
