@@ -17,15 +17,26 @@ public class NettySocketTest {
 	@Test
 	public void base_connection_test() throws Throwable {
 		MessageHandleImpl handle = new MessageHandleImpl(ByteBufAllocator.DEFAULT);
-		final Node node = new Node(handle) {
+		final Node node1 = new Node(handle) {
 			@Override
 			protected void process(Object msg) {
-				System.out.println(msg);
+				System.out.println("node1: " + msg);
 			}
 			
 			@Override
 			public Object flag() {
-				return "NODE";
+				return 1L;
+			}
+		};
+		final Node node2 = new Node(handle) {
+			@Override
+			protected void process(Object msg) {
+				System.out.println("node2: " + msg);
+			}
+			
+			@Override
+			public Object flag() {
+				return 2L;
 			}
 		};
 		
@@ -34,15 +45,15 @@ public class NettySocketTest {
 		NettyServer server = new NettyServer(uri.getPort()) {
 			@Override
 			protected Connection newConnection(ChannelHandlerContext ctx, Object msg) {
-				return new NettyConnection(node) {
+				return new NettyConnection(node2, ctx.channel()) {
 					@Override
 					public Object id() {
-						return 1L;
+						return 21L;
 					}
 					
 					@Override
 					public Object flag() {
-						return "client";
+						return 1L;
 					}
 				};
 			}
@@ -50,21 +61,22 @@ public class NettySocketTest {
 		
 		server.start();
 		
-		Connection conn = new NettyConnection(node, uri) {
+		Connection conn = new NettyConnection(node1, uri) {
 			@Override
 			public Object id() {
-				return 2L;
+				return 12L;
 			}
 			
 			@Override
 			public Object flag() {
-				return "server";
+				return 2L;
 			}
 		};
 		
-		conn.send(handle.newMessage(Commands.MSG, Status.NORMAL, 0L, 2, "hi".getBytes()));
-		
 		Thread.sleep(1000);
+		conn.send(handle.newMessage(Commands.MSG, Status.NORMAL, 1L, 2, "hi".getBytes()));
+		
+		Thread.sleep(1000000);
 	}
 	
 	@Test

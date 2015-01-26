@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.util.ReferenceCounted;
 
 public abstract class NettyHandler extends SimpleChannelInboundHandler<Object> {
 	private final static Logger logger = LoggerFactory.getLogger(NettyHandler.class);
@@ -28,8 +29,7 @@ public abstract class NettyHandler extends SimpleChannelInboundHandler<Object> {
 	
 	@Override
 	public void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
-		if (this.connection != null)
-			this.connection.onMessage(msg);
+		this.onMessage(msg);
 	}
 	
 	@Override
@@ -47,5 +47,15 @@ public abstract class NettyHandler extends SimpleChannelInboundHandler<Object> {
 						, this.connection.id())
 				: "exceptionCaught", cause);
 		ctx.close();
+	}
+	
+	protected void onMessage(Object msg) {
+		if (this.connection == null)
+			return;
+		
+		if (msg instanceof ReferenceCounted)
+			((ReferenceCounted) msg).retain();
+		
+		this.connection.onMessage(msg);
 	}
 }

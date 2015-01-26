@@ -18,13 +18,13 @@ import org.codesharp.traffic.Node;
 
 public abstract class NettyConnection extends Connection {
 	private final static EventLoopGroup group = new NioEventLoopGroup();
-
+	
 	private Node local;
 	private Channel channel;
 	
 	protected URI uri;
 	
-	protected NettyConnection(Node local) {
+	private NettyConnection(Node local) {
 		super(local);
 		this.local = local;
 	}
@@ -52,10 +52,11 @@ public abstract class NettyConnection extends Connection {
 	
 	protected void preparePipeline(ChannelPipeline pipeline) {
 		pipeline.addLast(
-				new MessageDecoder(new MessageHandleImpl(ByteBufAllocator.DEFAULT)), new NettyHandler() {
+				new MessageDecoder(new MessageHandleImpl(ByteBufAllocator.DEFAULT)),
+				new NettyHandler(this) {
 					@Override
 					protected Connection newConnection(ChannelHandlerContext ctx, Object msg) {
-						return null;
+						return NettyConnection.this;
 					}
 				});
 	}
