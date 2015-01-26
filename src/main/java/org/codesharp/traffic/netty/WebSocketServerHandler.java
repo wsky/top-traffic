@@ -9,7 +9,6 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
@@ -26,13 +25,12 @@ import static io.netty.handler.codec.http.HttpMethod.*;
 import static io.netty.handler.codec.http.HttpResponseStatus.*;
 import static io.netty.handler.codec.http.HttpVersion.*;
 
-public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> {
+public abstract class WebSocketServerHandler extends NettyHandler {
 	private final static Logger logger = LoggerFactory.getLogger(WebSocketServerHandler.class);
 	private WebSocketServerHandshaker handshaker;
-	private NettyConnection connection;
 	
-	public WebSocketServerHandler(NettyConnection connection) {
-		this.connection = connection;
+	@Override
+	public void channelActive(ChannelHandlerContext ctx) throws Exception {
 	}
 	
 	@Override
@@ -42,19 +40,6 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 		} else if (msg instanceof WebSocketFrame) {
 			handleWebSocketFrame(ctx, (WebSocketFrame) msg);
 		}
-	}
-	
-	@Override
-	public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-		// if read and write at once event,
-		// write will be executed until next event, call flush to force write
-		ctx.flush();
-	}
-	
-	@Override
-	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-		logger.error("exceptionCaught", cause);
-		ctx.close();
 	}
 	
 	private void handleHttpRequest(ChannelHandlerContext ctx, FullHttpRequest req) {
@@ -77,7 +62,7 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 		
 		try {
 			Channel ch = ctx.channel();
-			this.connection.channel(ch);
+			this.connection = this.newConnection(ctx, req);
 			handshaker.handshake(ch, req);
 		} catch (Exception e) {
 			logger.error("handshake error", e);
@@ -100,7 +85,7 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 		}
 		
 		try {
-			this.connection.onWrappedMessage(((TextWebSocketFrame) frame).text());
+			this.connection.onMessage(frame);
 		} catch (Exception e) {
 			logger.error("onMessage error", e);
 			handshaker.close(ctx.channel(),

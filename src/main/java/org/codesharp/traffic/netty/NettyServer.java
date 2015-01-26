@@ -1,8 +1,13 @@
 package org.codesharp.traffic.netty;
 
+import org.codesharp.traffic.Connection;
+
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -20,7 +25,17 @@ public abstract class NettyServer {
 		this.port = port;
 	}
 	
-	protected abstract NettyConnection newConnection();
+	protected abstract Connection newConnection(ChannelHandlerContext ctx, Object msg);
+	
+	protected void preparePipeline(ChannelPipeline pipeline) {
+		pipeline.addLast(new MessageDecoder(new MessageHandleImpl(ByteBufAllocator.DEFAULT)));
+		pipeline.addLast(new NettyHandler() {
+			@Override
+			protected Connection newConnection(ChannelHandlerContext ctx, Object msg) {
+				return NettyServer.this.newConnection(ctx, msg);
+			}
+		});
+	}
 	
 	public synchronized void start() throws InterruptedException {
 		if (this.bootstrap != null)
@@ -33,7 +48,7 @@ public abstract class NettyServer {
 				.childHandler(new ChannelInitializer<Channel>() {
 					@Override
 					protected void initChannel(Channel ch) throws Exception {
-						ch.pipeline().addLast(NettyServer.this.newConnection().newHandlers(null));
+						preparePipeline(ch.pipeline());
 					}
 				})
 				.bind(this.port)

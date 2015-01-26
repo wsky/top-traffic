@@ -3,6 +3,7 @@ package org.codesharp.traffic.netty;
 import java.net.URI;
 
 import io.netty.buffer.ByteBufAllocator;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 
 import org.codesharp.traffic.Commands;
@@ -32,7 +33,7 @@ public class NettySocketTest {
 		
 		NettyServer server = new NettyServer(uri.getPort()) {
 			@Override
-			protected NettyConnection newConnection() {
+			protected Connection newConnection(ChannelHandlerContext ctx, Object msg) {
 				return new NettyConnection(node) {
 					@Override
 					public Object id() {
@@ -83,10 +84,10 @@ public class NettySocketTest {
 		
 		URI uri = new URI("ws://localhost:8890");
 		
-		NettyServer server = new NettyServer(uri.getPort()) {
+		NettyServer server = new WebSocketServer(uri.getPort()) {
 			@Override
-			protected NettyConnection newConnection() {
-				return new WebSocketConnection(node) {
+			protected Connection newConnection(ChannelHandlerContext ctx, Object msg) {
+				return new Frontend(new WebSocketConnection(node, ctx.channel()) {
 					@Override
 					public Object id() {
 						return 1L;
@@ -96,12 +97,7 @@ public class NettySocketTest {
 					public Object flag() {
 						return "client";
 					}
-					
-					@Override
-					protected Connection wrap(Connection conn) {
-						return new Frontend(conn, handle);
-					}
-				};
+				}, handle);
 			}
 		};
 		
