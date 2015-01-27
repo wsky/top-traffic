@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Random;
 
 public abstract class Node {
-	protected MessageHandle handle;
+	private MessageHandle handle;
 	
 	private NodeProxy next;
 	private Map<Object, Connection> nodes = new HashMap<Object, Connection>();
@@ -47,6 +47,12 @@ public abstract class Node {
 	
 	protected void internalOnMessage(Object msg, Connection from) {
 		Object dst = this.handle.getDestination(msg);
+		
+		// FIXME dst match with flag, should be included in route()
+		if (this.flag().equals(dst)) {
+			this.process(msg);
+			return;
+		}
 		
 		Connection conn = this.route(dst, from);
 		if (conn != null) {

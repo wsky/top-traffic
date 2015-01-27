@@ -16,11 +16,11 @@ import org.junit.Test;
 public class NettySocketTest {
 	@Test
 	public void base_connection_test() throws Throwable {
-		MessageHandleImpl handle = new MessageHandleImpl(ByteBufAllocator.DEFAULT);
+		final MessageHandleImpl handle = new MessageHandleImpl(ByteBufAllocator.DEFAULT);
 		final Node node1 = new Node(handle) {
 			@Override
 			protected void process(Object msg) {
-				System.out.println("node1: " + msg);
+				System.out.println("node1: " + handle.toString(msg));
 			}
 			
 			@Override
@@ -31,7 +31,7 @@ public class NettySocketTest {
 		final Node node2 = new Node(handle) {
 			@Override
 			protected void process(Object msg) {
-				System.out.println("node2: " + msg);
+				System.out.println("node2: " + handle.toString(msg));
 			}
 			
 			@Override
@@ -73,10 +73,10 @@ public class NettySocketTest {
 			}
 		};
 		
-		Thread.sleep(1000);
 		conn.send(handle.newMessage(Commands.MSG, Status.NORMAL, 1L, 2, "hi".getBytes()));
+		conn.send(handle.newMessage(Commands.MSG, Status.NORMAL, 0L, 2, "hi".getBytes()));
 		
-		Thread.sleep(1000000);
+		Thread.sleep(100);
 	}
 	
 	@Test

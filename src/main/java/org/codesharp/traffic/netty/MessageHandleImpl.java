@@ -6,6 +6,7 @@ import io.netty.buffer.ByteBufAllocator;
 import org.codesharp.traffic.Asserter;
 import org.codesharp.traffic.Commands;
 import org.codesharp.traffic.MessageHandle;
+import org.codesharp.traffic.Status;
 
 /***
  * 
@@ -35,6 +36,21 @@ public class MessageHandleImpl implements MessageHandle {
 	
 	public MessageHandleImpl(ByteBufAllocator allocator) {
 		this.allocator = allocator;
+	}
+	
+	public String toString(Object msg) {
+		ByteBuf buf = (ByteBuf) msg;
+		ByteBuf body = this.getMessageBody(msg);
+		byte[] bytes = new byte[body.readableBytes()];
+		body.readBytes(bytes);
+		return String.format(
+				"cmd=%s, status=%s, len=%s, dst=%s, header-len=%s, body=%s",
+				this.getCommand(buf),
+				this.getStatus(buf),
+				this.getLen(buf),
+				this.getDestination(buf),
+				this.getHeaderLen(buf),
+				new String(bytes));
 	}
 	
 	public ByteBuf newMessage(byte cmd, byte status, long dst, int pathCount, byte[] body, Object... headers) {
@@ -187,15 +203,18 @@ public class MessageHandleImpl implements MessageHandle {
 	}
 	
 	public Object unknownDestination(Object msg) {
-		// HACK retain buffer reused for reply
-		ByteBuf buf = ((ByteBuf) msg).retain();
-		// FIXME add status to message
+		ByteBuf buf = (ByteBuf) msg;
 		this.setCommand(buf, Commands.ACK);
+		this.setStatus(buf, Status.UNKNOWN_DESTINATION);
 		return msg;
 	}
 	
 	protected void setCommand(ByteBuf buf, byte cmd) {
 		buf.setByte(0, cmd);
+	}
+	
+	protected void setStatus(ByteBuf buf, byte status) {
+		buf.setByte(1, status);
 	}
 	
 	protected void setBody(ByteBuf buf, byte[] body) {
