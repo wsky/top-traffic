@@ -4,7 +4,6 @@ import java.net.URI;
 
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 
 import org.codesharp.traffic.Commands;
 import org.codesharp.traffic.Connection;
@@ -42,7 +41,7 @@ public class NettySocketTest {
 		
 		URI uri = new URI("tcp://localhost:8889");
 		
-		NettyServer server = new NettyServer(uri.getPort()) {
+		NettyServer server = new NettyServer(node2, uri.getPort()) {
 			@Override
 			protected Connection newConnection(ChannelHandlerContext ctx, Object msg) {
 				return new NettyConnection(node2, ctx.channel()) {
@@ -74,6 +73,7 @@ public class NettySocketTest {
 		};
 		
 		conn.send(handle.newMessage(Commands.MSG, Status.NORMAL, 1L, 2, "hi".getBytes()));
+		conn.send(handle.newMessage(Commands.MSG, Status.NORMAL, 2L, 2, "hi".getBytes()));
 		conn.send(handle.newMessage(Commands.MSG, Status.NORMAL, 0L, 2, "hi".getBytes()));
 		
 		Thread.sleep(100);
@@ -82,32 +82,43 @@ public class NettySocketTest {
 	@Test
 	public void websocket_connection_test() throws Throwable {
 		final DRPCMessageHandleImpl handle = new DRPCMessageHandleImpl(ByteBufAllocator.DEFAULT);
-		final Node node = new Node(handle) {
+		final Node node1 = new Node(handle) {
 			@Override
 			protected void process(Object msg) {
-				System.out.println(msg);
+				System.out.println("node1: " + handle.toString(msg));
 			}
 			
 			@Override
 			public Object flag() {
-				return "NODE";
+				return 1L;
+			}
+		};
+		final Node node2 = new Node(handle) {
+			@Override
+			protected void process(Object msg) {
+				System.out.println("node2: " + handle.toString(msg));
+			}
+			
+			@Override
+			public Object flag() {
+				return 2L;
 			}
 		};
 		
 		URI uri = new URI("ws://localhost:8890");
 		
-		NettyServer server = new WebSocketServer(uri.getPort()) {
+		NettyServer server = new WebSocketServer(node2, uri.getPort()) {
 			@Override
 			protected Connection newConnection(ChannelHandlerContext ctx, Object msg) {
-				return new Frontend(new WebSocketConnection(node, ctx.channel()) {
+				return new Frontend(new WebSocketConnection(node2, ctx.channel()) {
 					@Override
 					public Object id() {
-						return 1L;
+						return 21L;
 					}
 					
 					@Override
 					public Object flag() {
-						return "client";
+						return 1L;
 					}
 				}, handle);
 			}
@@ -115,19 +126,21 @@ public class NettySocketTest {
 		
 		server.start();
 		
-		WebSocketConnection conn = new WebSocketConnection(node, uri) {
+		WebSocketConnection conn = new WebSocketConnection(node1, uri) {
 			@Override
 			public Object id() {
-				return 2L;
+				return 12L;
 			}
 			
 			@Override
 			public Object flag() {
-				return "server";
+				return 2L;
 			}
 		};
 		
-		conn.send(new TextWebSocketFrame("{ type:'REQ', id:1024, to:123 }"));
-		Thread.sleep(1000);
+		conn.send("{ type:'REQ', id:1024, to:1 }");
+		conn.send("{ type:'REQ', id:1024, to:2 }");
+		conn.send("{ type:'REQ', id:1024, to:0 }");
+		Thread.sleep(100);
 	}
 }

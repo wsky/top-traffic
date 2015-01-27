@@ -1,6 +1,7 @@
 package org.codesharp.traffic.netty;
 
 import org.codesharp.traffic.Connection;
+import org.codesharp.traffic.Node;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBufAllocator;
@@ -18,21 +19,29 @@ public abstract class NettyServer {
 	private final static EventLoopGroup bossGroup = new NioEventLoopGroup(1);
 	private final static EventLoopGroup workerGroup = new NioEventLoopGroup();
 	
+	private Node node;
 	private int port;
 	private ServerBootstrap bootstrap;
 	
-	public NettyServer(int port) {
+	public NettyServer(Node node, int port) {
+		this.node = node;
 		this.port = port;
 	}
 	
 	protected abstract Connection newConnection(ChannelHandlerContext ctx, Object msg);
+	
+	protected Connection connect(ChannelHandlerContext ctx, Object msg) {
+		Connection conn = this.newConnection(ctx, msg);
+		this.node.accept(conn);
+		return conn;
+	}
 	
 	protected void preparePipeline(ChannelPipeline pipeline) {
 		pipeline.addLast(new MessageDecoder(new MessageHandleImpl(ByteBufAllocator.DEFAULT)));
 		pipeline.addLast(new NettyHandler() {
 			@Override
 			protected Connection newConnection(ChannelHandlerContext ctx, Object msg) {
-				return NettyServer.this.newConnection(ctx, msg);
+				return NettyServer.this.connect(ctx, msg);
 			}
 		});
 	}

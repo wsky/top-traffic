@@ -19,30 +19,24 @@ import org.codesharp.traffic.Node;
 public abstract class NettyConnection extends Connection {
 	private final static EventLoopGroup group = new NioEventLoopGroup();
 	
-	private Node local;
 	private Channel channel;
 	
 	protected URI uri;
 	
 	private NettyConnection(Node local) {
 		super(local);
-		this.local = local;
 	}
 	
 	public NettyConnection(Node local, Channel channel) {
 		this(local);
-		this.channel(channel);
+		this.channel = channel;
 	}
 	
 	public NettyConnection(Node local, URI uri) throws Throwable {
 		this(local);
 		this.uri = uri;
-		this.channel(this.connect());
-	}
-	
-	protected void channel(Channel channel) {
-		this.channel = channel;
-		this.local.accept(this);
+		this.channel = this.connect();
+		local.accept(this);
 	}
 	
 	@Override

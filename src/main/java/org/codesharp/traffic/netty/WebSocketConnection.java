@@ -1,10 +1,12 @@
 package org.codesharp.traffic.netty;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshakerFactory;
 import io.netty.handler.codec.http.websocketx.WebSocketVersion;
 
@@ -19,6 +21,16 @@ public abstract class WebSocketConnection extends NettyConnection {
 	
 	public WebSocketConnection(Node local, URI uri) throws Throwable {
 		super(local, uri);
+	}
+	
+	@Override
+	public void send(Object msg) {
+		if (msg instanceof String)
+			super.send(new TextWebSocketFrame((String) msg));
+		else if (msg instanceof ByteBuf)
+			super.send(new TextWebSocketFrame((ByteBuf) msg));
+		else
+			super.send(msg);
 	}
 	
 	@Override

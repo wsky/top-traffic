@@ -6,10 +6,11 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 
 import org.codesharp.traffic.Connection;
+import org.codesharp.traffic.Node;
 
 public abstract class WebSocketServer extends NettyServer {
-	public WebSocketServer(int port) {
-		super(port);
+	public WebSocketServer(Node node, int port) {
+		super(node, port);
 	}
 	
 	@Override
@@ -20,7 +21,7 @@ public abstract class WebSocketServer extends NettyServer {
 				new WebSocketServerHandler() {
 					@Override
 					protected Connection newConnection(ChannelHandlerContext ctx, Object msg) {
-						return WebSocketServer.this.newConnection(ctx, msg);
+						return WebSocketServer.this.connect(ctx, msg);
 					}
 				});
 	}

@@ -4,8 +4,10 @@ import java.util.Map;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.util.CharsetUtil;
 
+import org.codesharp.traffic.Asserter;
 import org.codesharp.traffic.Commands;
 import org.codesharp.traffic.Status;
 import org.codesharp.traffic.drpc.DRPCMessageHandle;
@@ -35,7 +37,15 @@ public class DRPCMessageHandleImpl extends MessageHandleImpl implements DRPCMess
 	}
 	
 	public Object resolve(Object msg) {
-		return this.resolve((String) msg);
+		if (msg instanceof String)
+			return this.resolve((String) msg);
+		if (msg instanceof TextWebSocketFrame)
+			return this.resolve((TextWebSocketFrame) msg);
+		throw Asserter.unsupported(msg);
+	}
+	
+	public Map<?, ?> resolve(TextWebSocketFrame msg) {
+		return this.resolve(msg.text());
 	}
 	
 	public Map<?, ?> resolve(String msg) {
