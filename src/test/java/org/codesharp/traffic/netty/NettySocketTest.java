@@ -9,7 +9,6 @@ import org.codesharp.traffic.Commands;
 import org.codesharp.traffic.Connection;
 import org.codesharp.traffic.Node;
 import org.codesharp.traffic.Status;
-import org.codesharp.traffic.drpc.Frontend;
 import org.junit.Test;
 
 public class NettySocketTest {
@@ -110,7 +109,7 @@ public class NettySocketTest {
 		NettyServer server = new WebSocketServer(node2, uri.getPort()) {
 			@Override
 			protected Connection newConnection(ChannelHandlerContext ctx, Object msg) {
-				return new Frontend(new WebSocketConnection(node2, ctx.channel()) {
+				return new WebSocketConnection(node2, ctx.channel()) {
 					@Override
 					public Object id() {
 						return 21L;
@@ -120,7 +119,7 @@ public class NettySocketTest {
 					public Object flag() {
 						return 1L;
 					}
-				}, handle);
+				};
 			}
 		};
 		
@@ -138,9 +137,12 @@ public class NettySocketTest {
 			}
 		};
 		
-		conn.send("{ type:'REQ', id:1024, to:1 }");
-		conn.send("{ type:'REQ', id:1024, to:2 }");
-		conn.send("{ type:'REQ', id:1024, to:0 }");
+		// conn.send("{ type:'REQ', id:1024, to:1 }");
+		// conn.send("{ type:'REQ', id:1024, to:2 }");
+		// conn.send("{ type:'REQ', id:1024, to:0 }");
+		conn.send(handle.newMessage(Commands.MSG, Status.NORMAL, 1L, 2, "hi".getBytes()));
+		conn.send(handle.newMessage(Commands.MSG, Status.NORMAL, 2L, 2, "hi".getBytes()));
+		conn.send(handle.newMessage(Commands.MSG, Status.NORMAL, 0L, 2, "hi".getBytes()));
 		Thread.sleep(100);
 	}
 }

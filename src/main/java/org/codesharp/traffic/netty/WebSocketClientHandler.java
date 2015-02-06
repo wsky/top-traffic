@@ -1,24 +1,33 @@
 package org.codesharp.traffic.netty;
 
+import org.codesharp.traffic.Connection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
-import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
-import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.util.CharsetUtil;
 
-public class WebSocketClientHandler extends SimpleChannelInboundHandler<Object> {
+public class WebSocketClientHandler extends NettyHandler {
+	private final static Logger logger = LoggerFactory.getLogger(WebSocketClientHandler.class);
 	private WebSocketClientHandshaker handshaker;
 	private ChannelPromise handshakeFuture;
 	
-	public WebSocketClientHandler(WebSocketClientHandshaker handshaker) {
+	public WebSocketClientHandler(Connection connection, WebSocketClientHandshaker handshaker) {
+		super(connection);
 		this.handshaker = handshaker;
+	}
+	
+	@Override
+	protected Connection newConnection(ChannelHandlerContext ctx, Object msg) {
+		return this.connection;
 	}
 	
 	public ChannelFuture handshakeFuture() {
@@ -52,24 +61,31 @@ public class WebSocketClientHandler extends SimpleChannelInboundHandler<Object> 
 							", content=" + response.content().toString(CharsetUtil.UTF_8) + ')');
 		}
 		
-		WebSocketFrame frame = (WebSocketFrame) msg;
-		if (frame instanceof TextWebSocketFrame) {
-			TextWebSocketFrame textFrame = (TextWebSocketFrame) frame;
-			System.out.println("WebSocket Client received message: " + textFrame.text());
-		} else if (frame instanceof PongWebSocketFrame) {
+		if (msg instanceof PongWebSocketFrame) {
 			System.out.println("WebSocket Client received pong");
-		} else if (frame instanceof CloseWebSocketFrame) {
+			return;
+		}
+		
+		if (msg instanceof CloseWebSocketFrame) {
 			System.out.println("WebSocket Client received closing");
 			ch.close();
+			return;
+		}
+		
+		if (msg instanceof BinaryWebSocketFrame) {
+			try {
+				this.connection.onMessage(((BinaryWebSocketFrame) msg).content().retain());
+			} catch (Exception e) {
+				logger.error("onMessage error", e);
+			}
 		}
 	}
 	
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
 		cause.printStackTrace();
-		if (!handshakeFuture.isDone()) {
+		if (!handshakeFuture.isDone())
 			handshakeFuture.setFailure(cause);
-		}
 		ctx.close();
 	}
 }

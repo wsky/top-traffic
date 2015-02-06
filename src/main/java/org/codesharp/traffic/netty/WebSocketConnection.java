@@ -6,6 +6,7 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshakerFactory;
 import io.netty.handler.codec.http.websocketx.WebSocketVersion;
@@ -28,7 +29,7 @@ public abstract class WebSocketConnection extends NettyConnection {
 		if (msg instanceof String)
 			super.send(new TextWebSocketFrame((String) msg));
 		else if (msg instanceof ByteBuf)
-			super.send(new TextWebSocketFrame((ByteBuf) msg));
+			super.send(new BinaryWebSocketFrame((ByteBuf) msg));
 		else
 			super.send(msg);
 	}
@@ -39,7 +40,7 @@ public abstract class WebSocketConnection extends NettyConnection {
 				new HttpClientCodec(),
 				new HttpObjectAggregator(8192));
 		pipeline.addLast("handler",
-				new WebSocketClientHandler(
+				new WebSocketClientHandler(this,
 						WebSocketClientHandshakerFactory.newHandshaker(
 								this.uri, WebSocketVersion.V13, null, false, new DefaultHttpHeaders())));
 	}

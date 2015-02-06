@@ -13,10 +13,10 @@ import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketServerHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
@@ -79,22 +79,19 @@ public abstract class WebSocketServerHandler extends NettyHandler {
 			ctx.channel().write(new PongWebSocketFrame(frame.content().retain()));
 			return;
 		}
-		if (!(frame instanceof TextWebSocketFrame)) {
-			throw new UnsupportedOperationException(String.format("%s frame types not supported", frame.getClass()
-					.getName()));
-		}
 		
-		try {
-			this.connection.onMessage(frame);
-		} catch (Exception e) {
-			logger.error("onMessage error", e);
-			handshaker.close(ctx.channel(),
-					new CloseWebSocketFrame(true, 0,
-							frame.content().clear()
-									.writeShort(1000)
-									.writeBytes(e.getMessage().getBytes(CharsetUtil.UTF_8))
-									.retain()));
-		}
+		if (frame instanceof BinaryWebSocketFrame)
+			try {
+				this.connection.onMessage(((BinaryWebSocketFrame) frame).content().retain());
+			} catch (Exception e) {
+				logger.error("onMessage error", e);
+				handshaker.close(ctx.channel(),
+						new CloseWebSocketFrame(true, 0,
+								frame.content().clear()
+										.writeShort(1000)
+										.writeBytes(e.getMessage().getBytes(CharsetUtil.UTF_8))
+										.retain()));
+			}
 	}
 	
 	private static void sendHttpResponse(
